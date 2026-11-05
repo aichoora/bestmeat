@@ -5,14 +5,28 @@ const findProduct = (id) => PRODUCTS.find((p) => p.id === Number(id));
 const param = (key) => new URLSearchParams(location.search).get(key);
 
 // ---------- 장바구니 (브라우저 localStorage에 저장) ----------
+// 회원마다 따로 저장합니다. 비회원은 "bestmeat_cart", 회원은 "bestmeat_cart:이메일".
 const Cart = {
-  key: "bestmeat_cart",
-  get() {
-    try { return JSON.parse(localStorage.getItem(this.key)) || []; } catch { return []; }
+  guestKey: "bestmeat_cart",
+  keyFor(email) { return email ? `${this.guestKey}:${email}` : this.guestKey; },
+  get key() { return this.keyFor(Auth.current()?.email); },
+  load(key) {
+    try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; }
   },
+  get() { return this.load(this.key); },
   save(items) {
     try { localStorage.setItem(this.key, JSON.stringify(items)); } catch {}
     updateCartCount();
+  },
+  // 로그인 직후: 비회원일 때 담은 상품을 회원 장바구니로 옮김
+  mergeGuest() {
+    const guest = this.load(this.guestKey);
+    if (!guest.length) return;
+    guest.forEach((i) => this.add(i.id, i.qty));
+    try { localStorage.removeItem(this.guestKey); } catch {}
+  },
+  clearFor(email) {
+    try { localStorage.removeItem(this.keyFor(email)); } catch {}
   },
   add(id, qty = 1) {
     const items = this.get();
@@ -55,6 +69,7 @@ const Auth = {
     const user = this.users().find((u) => u.email === email.toLowerCase() && u.password === hashed);
     if (!user) return false;
     this.write(this.sessionKey, { email: user.email, name: user.name });
+    Cart.mergeGuest();
     return true;
   },
   logout() {
@@ -84,6 +99,7 @@ const Auth = {
     const me = this.current();
     if (!me) return;
     this.write(this.usersKey, this.users().filter((u) => u.email !== me.email));
+    Cart.clearFor(me.email);
     try { localStorage.removeItem(this.sessionKey); } catch {}
   },
 };
