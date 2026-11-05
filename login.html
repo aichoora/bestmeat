@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 - 베스트미트</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+
+  <main class="auth">
+    <h1>로그인</h1>
+    <p class="sub">베스트미트에 오신 것을 환영합니다</p>
+
+    <form id="form" novalidate>
+      <div class="field">
+        <label for="email">이메일</label>
+        <input id="email" type="email" autocomplete="username" placeholder="example@email.com" required>
+      </div>
+      <div class="field">
+        <label for="password">비밀번호</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="비밀번호 입력" required>
+      </div>
+      <div class="row">
+        <label class="check"><input type="checkbox" id="remember"> 아이디 저장</label>
+        <a href="#" onclick="alert('비밀번호 찾기는 다음 단계에서 만들 예정입니다.'); return false;">비밀번호 찾기</a>
+      </div>
+      <p class="form-error" id="error"></p>
+      <button class="btn btn-red">로그인</button>
+    </form>
+
+    <p class="links">아직 회원이 아니신가요? <a href="signup.html">회원가입</a></p>
+    <p class="demo-note">※ 시안용 화면입니다. 회원 정보는 이 브라우저에만 저장됩니다.</p>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const emailEl = document.getElementById("email");
+    const pwEl = document.getElementById("password");
+    const rememberEl = document.getElementById("remember");
+    const errorEl = document.getElementById("error");
+
+    // 이미 로그인했다면 메인으로
+    if (Auth.current()) location.replace("index.html");
+
+    // 저장된 아이디 / 방금 가입한 아이디 채우기
+    const saved = Auth.read("bestmeat_saved_email", "");
+    emailEl.value = param("email") || saved;
+    rememberEl.checked = !!saved;
+    (emailEl.value ? pwEl : emailEl).focus();
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = emailEl.value.trim();
+      const password = pwEl.value;
+      if (!email || !password) { errorEl.textContent = "이메일과 비밀번호를 입력해 주세요."; return; }
+
+      if (await Auth.login(email, password)) {
+        if (rememberEl.checked) Auth.write("bestmeat_saved_email", email);
+        else try { localStorage.removeItem("bestmeat_saved_email"); } catch {}
+        const next = param("next");
+        location.href = next && /^[\w-]+\.html/.test(next) ? next : "index.html";
+      } else {
+        errorEl.textContent = "이메일 또는 비밀번호가 올바르지 않습니다.";
+        pwEl.value = "";
+        pwEl.focus();
+      }
+    });
+  </script>
+</body>
+</html>

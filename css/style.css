@@ -120,6 +120,33 @@ button { font: inherit; cursor: pointer; border: 0; }
 .summary .btn { width: 100%; margin-top: 12px; padding: 16px; }
 .summary .hint { font-size: 13px; color: var(--gray); }
 
+/* ---------- 로그인 / 회원가입 ---------- */
+.auth { max-width: 440px; margin: 48px auto 24px; padding: 0 16px; }
+.auth h1 { text-align: center; font-size: 26px; margin-bottom: 6px; }
+.auth .sub { text-align: center; color: var(--gray); font-size: 14px; margin-bottom: 28px; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.field label i { color: var(--red); font-style: normal; }
+.field input { width: 100%; padding: 13px 14px; border: 1px solid #ddd; border-radius: 8px; font: inherit; outline: none; }
+.field input:focus { border-color: var(--red); }
+.field.invalid input { border-color: var(--red); background: #fff7f7; }
+.field .msg { font-size: 12px; margin-top: 4px; min-height: 18px; color: var(--gray); }
+.field.invalid .msg { color: var(--red); }
+.field.valid .msg { color: #1e6b3a; }
+.auth .btn { width: 100%; padding: 15px; font-size: 16px; }
+.auth .row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin: -4px 0 20px; color: var(--gray); }
+.auth .links { text-align: center; margin-top: 20px; font-size: 14px; color: var(--gray); }
+.auth .links a { color: var(--red); font-weight: 700; }
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--red); }
+.terms { border: 1px solid #ddd; border-radius: 8px; padding: 6px 16px; margin: 8px 0 20px; font-size: 14px; }
+.terms .check { padding: 10px 0; }
+.terms .all { font-weight: 700; border-bottom: 1px solid var(--line); }
+.terms em { font-style: normal; color: var(--red); font-size: 12px; }
+.terms em.opt { color: var(--gray); }
+.form-error { color: var(--red); font-size: 14px; text-align: center; margin-bottom: 12px; min-height: 20px; }
+.demo-note { margin-top: 24px; padding: 12px 14px; background: var(--bg); border-radius: 8px; font-size: 12px; color: var(--gray); }
+
 /* ---------- 푸터 / 토스트 ---------- */
 footer { background: #1b1b1b; color: #999; font-size: 13px; margin-top: 64px; }
 .footer-inner { max-width: 1200px; margin: 0 auto; padding: 36px 16px; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }

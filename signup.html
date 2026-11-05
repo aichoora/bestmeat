@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>회원가입 - 베스트미트</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+
+  <main class="auth">
+    <h1>회원가입</h1>
+    <p class="sub">가입하고 첫 구매 10% 할인 쿠폰을 받으세요 🎉</p>
+
+    <form id="form" novalidate>
+      <div class="field" data-key="email">
+        <label for="email">이메일 <i>*</i></label>
+        <input id="email" type="email" autocomplete="email" placeholder="example@email.com">
+        <p class="msg"></p>
+      </div>
+      <div class="field" data-key="password">
+        <label for="password">비밀번호 <i>*</i></label>
+        <input id="password" type="password" autocomplete="new-password" placeholder="영문, 숫자 포함 8자 이상">
+        <p class="msg"></p>
+      </div>
+      <div class="field" data-key="password2">
+        <label for="password2">비밀번호 확인 <i>*</i></label>
+        <input id="password2" type="password" autocomplete="new-password" placeholder="비밀번호를 한 번 더 입력">
+        <p class="msg"></p>
+      </div>
+      <div class="field" data-key="name">
+        <label for="name">이름 <i>*</i></label>
+        <input id="name" autocomplete="name" placeholder="이름 입력">
+        <p class="msg"></p>
+      </div>
+      <div class="field" data-key="phone">
+        <label for="phone">휴대폰 번호 <i>*</i></label>
+        <input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="010-0000-0000">
+        <p class="msg"></p>
+      </div>
+
+      <div class="terms">
+        <label class="check all"><input type="checkbox" id="agree-all"> 전체 동의합니다</label>
+        <label class="check"><input type="checkbox" class="agree" data-required> 이용약관 동의 <em>(필수)</em></label>
+        <label class="check"><input type="checkbox" class="agree" data-required> 개인정보 수집·이용 동의 <em>(필수)</em></label>
+        <label class="check"><input type="checkbox" class="agree" data-required> 만 14세 이상입니다 <em>(필수)</em></label>
+        <label class="check"><input type="checkbox" class="agree" id="marketing"> 할인·이벤트 소식 받기 <em class="opt">(선택)</em></label>
+      </div>
+
+      <p class="form-error" id="error"></p>
+      <button class="btn btn-red">가입하기</button>
+    </form>
+
+    <p class="links">이미 회원이신가요? <a href="login.html">로그인</a></p>
+    <p class="demo-note">※ 시안용 화면입니다. 회원 정보는 이 브라우저에만 저장됩니다.</p>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const val = (id) => $(id).value.trim();
+
+    // 항목별 검사 규칙: 문제가 있으면 오류 문구, 괜찮으면 "" 반환
+    const rules = {
+      email: () => {
+        const v = val("email");
+        if (!v) return "이메일을 입력해 주세요.";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "이메일 형식이 올바르지 않습니다.";
+        if (Auth.exists(v)) return "이미 가입된 이메일입니다.";
+        return "";
+      },
+      password: () => {
+        const v = $("password").value;
+        if (v.length < 8) return "8자 이상 입력해 주세요.";
+        if (!/[A-Za-z]/.test(v) || !/\d/.test(v)) return "영문과 숫자를 모두 포함해 주세요.";
+        return "";
+      },
+      password2: () => {
+        if (!$("password2").value) return "비밀번호를 한 번 더 입력해 주세요.";
+        return $("password2").value === $("password").value ? "" : "비밀번호가 일치하지 않습니다.";
+      },
+      name: () => (val("name").length >= 2 ? "" : "이름을 2자 이상 입력해 주세요."),
+      phone: () => (/^01[016789]-?\d{3,4}-?\d{4}$/.test(val("phone")) ? "" : "휴대폰 번호를 정확히 입력해 주세요."),
+    };
+    const okText = { email: "사용 가능한 이메일입니다.", password: "사용 가능한 비밀번호입니다.", password2: "비밀번호가 일치합니다." };
+
+    function check(key) {
+      const field = document.querySelector(`.field[data-key="${key}"]`);
+      const err = rules[key]();
+      field.classList.toggle("invalid", !!err);
+      field.classList.toggle("valid", !err);
+      field.querySelector(".msg").textContent = err || okText[key] || "";
+      return !err;
+    }
+
+    // 입력칸을 벗어날 때 검사, 오류가 있던 칸은 입력하면서 다시 검사
+    Object.keys(rules).forEach((key) => {
+      const input = $(key);
+      input.addEventListener("blur", () => input.value && check(key));
+      input.addEventListener("input", () => {
+        if (document.querySelector(`.field[data-key="${key}"]`).classList.contains("invalid")) check(key);
+        if (key === "password" && $("password2").value) check("password2");
+      });
+    });
+
+    // 휴대폰 번호 자동 하이픈
+    $("phone").addEventListener("input", (e) => {
+      const d = e.target.value.replace(/\D/g, "").slice(0, 11);
+      e.target.value = d.length < 4 ? d : d.length < 8 ? `${d.slice(0, 3)}-${d.slice(3)}` : `${d.slice(0, 3)}-${d.slice(3, d.length - 4)}-${d.slice(-4)}`;
+    });
+
+    // 약관 전체 동의
+    const agrees = [...document.querySelectorAll(".agree")];
+    $("agree-all").addEventListener("change", (e) => agrees.forEach((c) => (c.checked = e.target.checked)));
+    agrees.forEach((c) => c.addEventListener("change", () => ($("agree-all").checked = agrees.every((x) => x.checked))));
+
+    $("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const results = Object.keys(rules).map(check);
+      if (results.includes(false)) {
+        $("error").textContent = "입력한 내용을 다시 확인해 주세요.";
+        document.querySelector(".field.invalid input").focus();
+        return;
+      }
+      if (agrees.some((c) => c.hasAttribute("data-required") && !c.checked)) {
+        $("error").textContent = "필수 약관에 동의해 주세요.";
+        return;
+      }
+      await Auth.signup({ email: val("email"), password: $("password").value, name: val("name"), phone: val("phone"), marketing: $("marketing").checked });
+      alert(`${val("name")}님, 가입을 환영합니다! 로그인해 주세요.`);
+      location.href = `login.html?email=${encodeURIComponent(val("email"))}`;
+    });
+  </script>
+</body>
+</html>

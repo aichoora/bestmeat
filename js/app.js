@@ -27,6 +27,45 @@ const Cart = {
   count() { return this.get().reduce((s, i) => s + i.qty, 0); },
 };
 
+// ---------- 회원 (시안용: 브라우저 localStorage에 저장) ----------
+// 실제 서비스에서는 반드시 서버에서 회원 정보와 비밀번호를 관리해야 합니다.
+const Auth = {
+  usersKey: "bestmeat_users",
+  sessionKey: "bestmeat_session",
+  read(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+  },
+  write(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  },
+  async hash(text) {
+    if (!window.crypto?.subtle) return text;
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  },
+  users() { return this.read(this.usersKey, []); },
+  exists(email) { return this.users().some((u) => u.email === email.toLowerCase()); },
+  async signup({ email, password, name, phone, marketing }) {
+    const users = this.users();
+    users.push({ email: email.toLowerCase(), password: await this.hash(password), name, phone, marketing, joinedAt: new Date().toISOString() });
+    this.write(this.usersKey, users);
+  },
+  async login(email, password) {
+    const hashed = await this.hash(password);
+    const user = this.users().find((u) => u.email === email.toLowerCase() && u.password === hashed);
+    if (!user) return false;
+    this.write(this.sessionKey, { email: user.email, name: user.name });
+    return true;
+  },
+  logout() {
+    try { localStorage.removeItem(this.sessionKey); } catch {}
+    location.href = "index.html";
+  },
+  current() { return this.read(this.sessionKey, null); },
+};
+
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 function updateCartCount() {
   const el = document.getElementById("cart-count");
   if (!el) return;
@@ -81,11 +120,13 @@ function renderLayout() {
       <div class="header-inner">
         <a href="index.html" class="logo">BEST<span>MEAT</span></a>
         <form class="search" action="products.html">
-          <input name="q" placeholder="오늘은 어떤 고기가 필요하세요?" value="${param("q") || ""}">
+          <input name="q" placeholder="오늘은 어떤 고기가 필요하세요?" value="${escapeHtml(param("q") || "")}">
           <button aria-label="검색">🔍</button>
         </form>
         <nav class="util">
-          <a href="#">로그인</a>
+          ${Auth.current()
+            ? `<span><b>${escapeHtml(Auth.current().name)}</b>님</span><a href="#" onclick="Auth.logout(); return false;">로그아웃</a>`
+            : `<a href="login.html">로그인</a><a href="signup.html">회원가입</a>`}
           <a href="cart.html" class="cart-link">🛒 장바구니 <i id="cart-count" hidden>0</i></a>
         </nav>
       </div>
