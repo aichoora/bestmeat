@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>주문서 - 베스트미트</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+
+  <main class="wrap">
+    <h1 class="page-title">주문서</h1>
+    <ol class="steps"><li>장바구니</li><li class="on">주문서 작성</li><li>주문 완료</li></ol>
+
+    <form id="form" class="cart-layout" novalidate>
+      <div>
+        <!-- 주문 상품 -->
+        <section class="box">
+          <h2>주문 상품 <small id="item-count"></small></h2>
+          <div id="items"></div>
+        </section>
+
+        <!-- 주문자 -->
+        <section class="box">
+          <h2>주문자 정보</h2>
+          <dl class="info compact" id="orderer"></dl>
+        </section>
+
+        <!-- 배송지 -->
+        <section class="box">
+          <h2>배송지 <label class="check small"><input type="checkbox" id="same"> 주문자 정보와 같음</label></h2>
+          <div class="cols">
+            <div class="field"><label for="r-name">받는 분 <i>*</i></label><input id="r-name" autocomplete="name"><p class="msg"></p></div>
+            <div class="field"><label for="r-phone">연락처 <i>*</i></label><input id="r-phone" type="tel" inputmode="numeric" placeholder="010-0000-0000"><p class="msg"></p></div>
+          </div>
+          <div class="field">
+            <label for="zip">주소 <i>*</i></label>
+            <div class="inline"><input id="zip" placeholder="우편번호" readonly><button type="button" class="btn btn-line" id="find-addr">주소 검색</button></div>
+            <input id="addr1" placeholder="기본 주소" readonly style="margin-top:8px">
+            <input id="addr2" placeholder="상세 주소 (동, 호수 등)" style="margin-top:8px">
+            <p class="msg"></p>
+          </div>
+          <div class="field">
+            <label for="memo">배송 요청사항</label>
+            <select id="memo">
+              <option>문 앞에 놓아주세요</option>
+              <option>경비실에 맡겨주세요</option>
+              <option>배송 전 연락 부탁드립니다</option>
+              <option>택배함에 넣어주세요</option>
+              <option value="custom">직접 입력</option>
+            </select>
+            <input id="memo-custom" placeholder="요청사항을 입력해 주세요" maxlength="50" hidden style="margin-top:8px">
+          </div>
+          <div class="field">
+            <label>도착 희망일</label>
+            <div class="chips" id="dates"></div>
+            <p class="msg">냉장 상품이라 일요일에는 도착하지 않습니다.</p>
+          </div>
+        </section>
+
+        <!-- 할인 -->
+        <section class="box">
+          <h2>할인 혜택</h2>
+          <div id="coupon"></div>
+        </section>
+
+        <!-- 결제수단 -->
+        <section class="box">
+          <h2>결제 수단</h2>
+          <div class="chips pay" id="methods">
+            <label><input type="radio" name="pay" value="card" checked><span>💳 신용카드</span></label>
+            <label><input type="radio" name="pay" value="transfer"><span>🏦 계좌이체</span></label>
+            <label><input type="radio" name="pay" value="deposit"><span>🧾 무통장입금</span></label>
+            <label><input type="radio" name="pay" value="phone"><span>📱 휴대폰</span></label>
+          </div>
+          <div class="pay-detail" data-for="card">
+            <div class="cols">
+              <div class="field"><label for="card">카드사</label>
+                <select id="card"><option>국민카드</option><option>신한카드</option><option>삼성카드</option><option>현대카드</option><option>롯데카드</option><option>하나카드</option><option>우리카드</option><option>BC카드</option><option>NH농협카드</option></select></div>
+              <div class="field"><label for="installment">할부</label>
+                <select id="installment"><option value="0">일시불</option><option value="2">2개월</option><option value="3">3개월 (무이자)</option><option value="6">6개월</option></select></div>
+            </div>
+          </div>
+          <div class="pay-detail" data-for="deposit" hidden>
+            <div class="cols">
+              <div class="field"><label for="bank">입금 은행</label>
+                <select id="bank"><option>국민은행</option><option>신한은행</option><option>우리은행</option><option>하나은행</option><option>농협은행</option></select></div>
+              <div class="field"><label for="depositor">입금자명 <i>*</i></label><input id="depositor"><p class="msg"></p></div>
+            </div>
+            <p class="msg">주문 후 24시간 안에 입금하지 않으면 주문이 자동 취소됩니다.</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- 결제 금액 -->
+      <aside class="summary">
+        <div><span>상품금액</span><span id="s-price"></span></div>
+        <div><span>상품할인</span><span id="s-saved"></span></div>
+        <div><span>쿠폰할인</span><span id="s-coupon"></span></div>
+        <div><span>배송비</span><span id="s-ship"></span></div>
+        <div class="sum"><span>최종 결제금액</span><span id="s-total"></span></div>
+        <label class="check agree-pay"><input type="checkbox" id="agree"> 주문 내용을 확인했으며 결제에 동의합니다 <em>(필수)</em></label>
+        <p class="form-error" id="error"></p>
+        <button class="btn btn-red" id="pay-btn">결제하기</button>
+        <p class="hint">※ 시안용 화면입니다. 실제 결제는 이루어지지 않습니다.</p>
+      </aside>
+    </form>
+  </main>
+
+  <div class="overlay" id="addr-layer" hidden>
+    <div class="addr-box">
+      <div class="addr-head"><b>주소 검색</b><button type="button" id="addr-close" aria-label="닫기">✕</button></div>
+      <div id="addr-frame"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" hidden><div><div class="spinner"></div><p>결제를 진행하고 있어요...</p></div></div>
+
+  <footer id="footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const me = Auth.profile();
+    const cart = cartSummary();
+
+    // 로그인 안 했거나 장바구니가 비었으면 돌려보내기
+    if (!me) location.replace("login.html?next=checkout.html");
+    else if (!cart.items.length) { alert("장바구니가 비어 있어요."); location.replace("cart.html"); }
+
+    // ----- 주문 상품 -----
+    $("item-count").textContent = `${cart.items.length}종`;
+    $("items").innerHTML = cart.items.map(({ p, qty }) => `
+      <div class="order-item">
+        ${thumb(p)}
+        <div><p class="name">${p.name} <small>${p.weight}</small></p><p class="origin">수량 ${qty}개</p></div>
+        <strong>${won(p.sale * qty)}</strong>
+      </div>`).join("");
+
+    // ----- 주문자 -----
+    if (me) {
+      $("orderer").innerHTML = `
+        <div><dt>이름</dt><dd>${escapeHtml(me.name)}</dd></div>
+        <div><dt>연락처</dt><dd>${escapeHtml(me.phone)}</dd></div>
+        <div><dt>이메일</dt><dd>${escapeHtml(me.email)}</dd></div>`;
+    }
+    $("same").addEventListener("change", (e) => {
+      $("r-name").value = e.target.checked ? me.name : "";
+      $("r-phone").value = e.target.checked ? me.phone : "";
+    });
+
+    // 연락처 자동 하이픈
+    $("r-phone").addEventListener("input", (e) => {
+      const d = e.target.value.replace(/\D/g, "").slice(0, 11);
+      e.target.value = d.length < 4 ? d : d.length < 8 ? `${d.slice(0, 3)}-${d.slice(3)}` : `${d.slice(0, 3)}-${d.slice(3, d.length - 4)}-${d.slice(-4)}`;
+    });
+
+    // ----- 주소 검색 (다음 우편번호 서비스) -----
+    // 팝업 창 대신 화면 안의 레이어에 검색창을 띄웁니다.
+    // 주의: 파일(file://)로 열면 검색 결과가 페이지로 전달되지 않습니다. node server.js로 실행하세요.
+    function manualAddress(msg) {
+      $("zip").readOnly = $("addr1").readOnly = false;
+      $("zip").focus();
+      toast(msg);
+    }
+    function closeAddr() { $("addr-layer").hidden = true; $("addr-frame").innerHTML = ""; }
+    $("addr-close").addEventListener("click", closeAddr);
+    $("addr-layer").addEventListener("click", (e) => e.target.id === "addr-layer" && closeAddr());
+
+    $("find-addr").addEventListener("click", () => {
+      if (location.protocol === "file:") return manualAddress("파일로 열면 주소 검색이 동작하지 않아요. 직접 입력해 주세요.");
+      if (!window.daum?.Postcode) return manualAddress("주소 검색을 불러오지 못했어요. 직접 입력해 주세요.");
+
+      $("addr-layer").hidden = false;
+      new daum.Postcode({
+        oncomplete: (data) => {
+          $("zip").value = data.zonecode;
+          $("addr1").value = data.roadAddress || data.jibunAddress;
+          setField($("addr2"), "");
+          closeAddr();
+          $("addr2").focus();
+        },
+        width: "100%",
+        height: "100%",
+      }).embed($("addr-frame"));
+    });
+
+    // ----- 배송 요청사항 -----
+    $("memo").addEventListener("change", (e) => ($("memo-custom").hidden = e.target.value !== "custom"));
+
+    // ----- 도착 희망일 (내일부터, 일요일 제외 5일) -----
+    const days = ["일", "월", "화", "수", "목", "금", "토"];
+    const dates = [];
+    for (let d = new Date(), i = 0; dates.length < 5 && i < 14; i++) {
+      d.setDate(d.getDate() + 1);
+      if (d.getDay() !== 0) dates.push(new Date(d));
+    }
+    $("dates").innerHTML = dates.map((d, i) => {
+      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const label = `${d.getMonth() + 1}/${d.getDate()} (${days[d.getDay()]})`;
+      return `<label><input type="radio" name="date" value="${value}" ${i === 0 ? "checked" : ""}><span>${label}</span></label>`;
+    }).join("");
+
+    // ----- 쿠폰 -----
+    const firstOrder = Orders.mine().length === 0;
+    const couponAmount = firstOrder ? Math.min(Math.floor((cart.subtotal * FIRST_COUPON.rate) / 10) * 10, FIRST_COUPON.max) : 0;
+    $("coupon").innerHTML = firstOrder
+      ? `<label class="coupon"><input type="checkbox" id="use-coupon" checked>
+           <span><b>🎉 첫 구매 10% 할인</b><small>최대 ${won(FIRST_COUPON.max)} · 회원가입 축하 쿠폰</small></span>
+           <strong>-${won(couponAmount)}</strong></label>`
+      : `<p class="msg">사용 가능한 쿠폰이 없습니다.</p>`;
+    $("use-coupon")?.addEventListener("change", updateTotal);
+
+    // ----- 결제수단 -----
+    document.querySelectorAll("input[name=pay]").forEach((r) => r.addEventListener("change", () => {
+      document.querySelectorAll(".pay-detail").forEach((el) => (el.hidden = el.dataset.for !== r.value));
+    }));
+
+    // ----- 금액 -----
+    function totals() {
+      const coupon = $("use-coupon")?.checked ? couponAmount : 0;
+      return { coupon, total: cart.subtotal - coupon + cart.ship };
+    }
+    function updateTotal() {
+      const { coupon, total } = totals();
+      $("s-price").textContent = won(cart.subtotal + cart.saved);
+      $("s-saved").textContent = "-" + won(cart.saved);
+      $("s-coupon").textContent = "-" + won(coupon);
+      $("s-ship").textContent = cart.ship ? won(cart.ship) : "무료";
+      $("s-total").textContent = won(total);
+      $("pay-btn").textContent = `${won(total)} 결제하기`;
+    }
+    updateTotal();
+
+    // ----- 입력 검사 -----
+    function setField(input, err) {
+      const field = input.closest(".field");
+      field.classList.toggle("invalid", !!err);
+      field.querySelector(".msg").textContent = err;
+      return !err;
+    }
+    function validate() {
+      const payMethod = document.querySelector("input[name=pay]:checked").value;
+      const checks = [
+        setField($("r-name"), $("r-name").value.trim().length >= 2 ? "" : "받는 분 이름을 입력해 주세요."),
+        setField($("r-phone"), /^01[016789]-?\d{3,4}-?\d{4}$/.test($("r-phone").value.trim()) ? "" : "연락처를 정확히 입력해 주세요."),
+        setField($("addr2"), !$("zip").value.trim() || !$("addr1").value.trim() ? "주소 검색으로 주소를 입력해 주세요."
+          : !$("addr2").value.trim() ? "상세 주소를 입력해 주세요." : ""),
+      ];
+      if (payMethod === "deposit") checks.push(setField($("depositor"), $("depositor").value.trim() ? "" : "입금자명을 입력해 주세요."));
+      return checks.every(Boolean);
+    }
+
+    // ----- 결제 -----
+    $("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      $("error").textContent = "";
+      if (!validate()) {
+        $("error").textContent = "입력한 내용을 다시 확인해 주세요.";
+        document.querySelector(".field.invalid input")?.focus();
+        return;
+      }
+      if (!$("agree").checked) { $("error").textContent = "결제 동의에 체크해 주세요."; return; }
+
+      const pay = document.querySelector("input[name=pay]:checked").value;
+      const { coupon, total } = totals();
+      const memo = $("memo").value === "custom" ? $("memo-custom").value.trim() : $("memo").value;
+
+      $("overlay").hidden = false;
+      setTimeout(() => {
+        const order = Orders.create({
+          email: me.email,
+          items: cart.items.map(({ p, qty }) => ({ id: p.id, name: p.name, weight: p.weight, price: p.sale, qty })),
+          receiver: { name: $("r-name").value.trim(), phone: $("r-phone").value.trim(), zip: $("zip").value.trim(), addr1: $("addr1").value.trim(), addr2: $("addr2").value.trim(), memo },
+          deliveryDate: document.querySelector("input[name=date]:checked").value,
+          payment: {
+            method: pay,
+            card: pay === "card" ? $("card").value : null,
+            installment: pay === "card" ? Number($("installment").value) : null,
+            bank: pay === "deposit" ? $("bank").value : null,
+            depositor: pay === "deposit" ? $("depositor").value.trim() : null,
+          },
+          amount: { subtotal: cart.subtotal, saved: cart.saved, coupon, ship: cart.ship, total },
+          status: pay === "deposit" ? "입금대기" : "결제완료",
+        });
+        Cart.save([]);
+        location.replace(`order-complete.html?id=${order.id}`);
+      }, 1200);
+    });
+  </script>
+</body>
+</html>

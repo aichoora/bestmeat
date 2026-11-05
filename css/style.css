@@ -147,6 +147,68 @@ button { font: inherit; cursor: pointer; border: 0; }
 .form-error { color: var(--red); font-size: 14px; text-align: center; margin-bottom: 12px; min-height: 20px; }
 .demo-note { margin-top: 24px; padding: 12px 14px; background: var(--bg); border-radius: 8px; font-size: 12px; color: var(--gray); }
 
+/* ---------- 주문서 / 주문 완료 ---------- */
+.steps { display: flex; gap: 8px; list-style: none; margin: 0 0 20px; font-size: 14px; color: #aaa; counter-reset: step; }
+.steps li { counter-increment: step; }
+.steps li::before { content: counter(step) ". "; }
+.steps li:not(:last-child)::after { content: "›"; margin-left: 8px; }
+.steps li.on { color: var(--red); font-weight: 700; }
+.box { border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+.box h2 { font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.box h2 small { color: var(--gray); font-weight: 400; font-size: 14px; }
+.box .field input, .box .field select, .field select { width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 8px; font: inherit; background: #fff; outline: none; }
+.box .field input:focus, .field select:focus { border-color: var(--red); }
+.box .field input[readonly] { background: #f6f6f6; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.inline { display: flex; gap: 8px; }
+.inline input { flex: 1; }
+.inline .btn { padding: 0 18px; white-space: nowrap; border-radius: 8px; }
+.check.small { font-size: 13px; font-weight: 400; color: var(--gray); }
+.info.compact { margin: 0; border-top: 0; }
+.info.compact div:last-child { border-bottom: 0; }
+.order-item { display: grid; grid-template-columns: 64px 1fr auto; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.order-item:last-child { border-bottom: 0; }
+.order-item .thumb { border-radius: 8px; }
+.order-item .thumb span { font-size: 30px; }
+.order-item .badge { display: none; }
+.order-item .name { margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips label { cursor: pointer; }
+.chips input { position: absolute; opacity: 0; pointer-events: none; }
+.chips span { display: block; padding: 10px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+.chips input:checked + span { border-color: var(--red); color: var(--red); font-weight: 700; background: #fff5f5; }
+.chips input:focus-visible + span { outline: 2px solid var(--red); outline-offset: 2px; }
+.chips.pay { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 16px; }
+.chips.pay span { text-align: center; padding: 14px 8px; }
+.coupon { display: flex; align-items: center; gap: 12px; border: 1px dashed var(--red); background: #fff7f7; border-radius: 10px; padding: 14px 16px; cursor: pointer; }
+.coupon input { width: 18px; height: 18px; accent-color: var(--red); }
+.coupon span { flex: 1; }
+.coupon small { display: block; color: var(--gray); font-size: 12px; }
+.coupon strong { color: var(--red); }
+.summary .agree-pay { font-size: 13px; margin: 16px 0 4px; align-items: flex-start; display: flex; }
+.summary .agree-pay em { color: var(--red); font-style: normal; }
+.summary .form-error { margin: 8px 0 0; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: grid; place-items: center; z-index: 100; }
+.overlay[hidden] { display: none; }
+.overlay > div { background: #fff; padding: 32px 40px; border-radius: var(--radius); text-align: center; }
+.overlay > .addr-box { width: min(500px, calc(100vw - 32px)); height: min(560px, calc(100vh - 64px)); padding: 0; overflow: hidden; display: flex; flex-direction: column; text-align: left; }
+.addr-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.addr-head button { background: none; font-size: 20px; color: var(--gray); }
+#addr-frame { flex: 1; }
+.spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top-color: var(--red); border-radius: 50%; margin: 0 auto 14px; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.complete { max-width: 760px; margin-top: 32px; }
+.done { text-align: center; padding: 24px 0 36px; }
+.done-icon { font-size: 64px; }
+.done h1 { font-size: 26px; margin: 8px 0; }
+.done p { color: #555; }
+.order-no { display: inline-block; margin-top: 12px; padding: 6px 14px; background: var(--bg); border-radius: 999px; font-size: 14px; }
+.notice { border-color: var(--red); background: #fffafa; }
+.red { color: var(--red); }
+.done-actions { display: flex; gap: 10px; justify-content: center; margin: 32px 0; }
+.done-actions .btn { min-width: 160px; text-align: center; }
+
 /* ---------- 푸터 / 토스트 ---------- */
 footer { background: #1b1b1b; color: #999; font-size: 13px; margin-top: 64px; }
 .footer-inner { max-width: 1200px; margin: 0 auto; padding: 36px 16px; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
@@ -169,5 +231,8 @@ footer .logo { color: #fff; margin-bottom: 6px; }
   .search { order: 3; max-width: none; flex-basis: 100%; }
   .promise .wrap { grid-template-columns: 1fr; }
   .cart-item { grid-template-columns: 70px 1fr; }
+  .cols { grid-template-columns: 1fr; }
+  .chips.pay { grid-template-columns: repeat(2, 1fr); }
+  .box { padding: 18px; }
   .thumb span { font-size: 56px; }
 }

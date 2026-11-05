@@ -62,7 +62,42 @@ const Auth = {
     location.href = "index.html";
   },
   current() { return this.read(this.sessionKey, null); },
+  profile() {
+    const s = this.current();
+    return s ? this.users().find((u) => u.email === s.email) || null : null;
+  },
 };
+
+// ---------- 주문 (시안용: localStorage에 저장) ----------
+const SHIPPING = { free: 50000, fee: 3500 };
+const FIRST_COUPON = { rate: 0.1, max: 10000 }; // 첫 구매 10% (최대 1만원)
+
+const Orders = {
+  key: "bestmeat_orders",
+  all() { return Auth.read(this.key, []); },
+  mine() {
+    const me = Auth.current();
+    return me ? this.all().filter((o) => o.email === me.email) : [];
+  },
+  find(id) { return this.all().find((o) => o.id === id); },
+  create(order) {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const id = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${String(Math.floor(Math.random() * 1e6)).padStart(6, "0")}`;
+    const saved = { ...order, id, createdAt: d.toISOString() };
+    Auth.write(this.key, [...this.all(), saved]);
+    return saved;
+  },
+};
+
+// 장바구니 금액 계산 (장바구니, 주문서에서 함께 사용)
+function cartSummary() {
+  const items = Cart.get().map((i) => ({ ...i, p: findProduct(i.id) })).filter((i) => i.p);
+  const subtotal = items.reduce((s, i) => s + i.p.sale * i.qty, 0);
+  const saved = items.reduce((s, i) => s + (i.p.price - i.p.sale) * i.qty, 0);
+  const ship = !items.length || subtotal >= SHIPPING.free ? 0 : SHIPPING.fee;
+  return { items, subtotal, saved, ship };
+}
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 

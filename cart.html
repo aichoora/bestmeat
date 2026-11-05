@@ -19,11 +19,8 @@
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
   <script>
-    const FREE_SHIP = 50000;
-    const SHIP_FEE = 3500;
-
     function draw() {
-      const items = Cart.get().map((i) => ({ ...i, p: findProduct(i.id) })).filter((i) => i.p);
+      const { items, subtotal, saved, ship } = cartSummary();
       const box = document.getElementById("cart");
 
       if (!items.length) {
@@ -31,10 +28,6 @@
           <a href="products.html" class="btn btn-red">쇼핑하러 가기</a></div>`;
         return;
       }
-
-      const subtotal = items.reduce((s, i) => s + i.p.sale * i.qty, 0);
-      const saved = items.reduce((s, i) => s + (i.p.price - i.p.sale) * i.qty, 0);
-      const ship = subtotal >= FREE_SHIP ? 0 : SHIP_FEE;
 
       box.innerHTML = `
         <div class="cart-layout">
@@ -59,7 +52,7 @@
             <div><span>할인금액</span><span>-${won(saved)}</span></div>
             <div><span>배송비</span><span>${ship ? won(ship) : "무료"}</span></div>
             <div class="sum"><span>결제예정금액</span><span>${won(subtotal + ship)}</span></div>
-            ${ship ? `<p class="hint">${won(FREE_SHIP - subtotal)} 더 담으면 무료배송!</p>` : ""}
+            ${ship ? `<p class="hint">${won(SHIPPING.free - subtotal)} 더 담으면 무료배송!</p>` : ""}
             <button class="btn btn-red" onclick="order()">주문하기</button>
           </aside>
         </div>`;
@@ -67,10 +60,10 @@
 
     function order() {
       if (!Auth.current()) {
-        if (confirm("주문하려면 로그인이 필요합니다. 로그인 하시겠어요?")) location.href = "login.html?next=cart.html";
+        if (confirm("주문하려면 로그인이 필요합니다. 로그인 하시겠어요?")) location.href = "login.html?next=checkout.html";
         return;
       }
-      alert("결제 기능은 다음 단계에서 만들 예정입니다.");
+      location.href = "checkout.html";
     }
 
     draw();
