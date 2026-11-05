@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>장바구니 - 베스트미트</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+
+  <main class="wrap">
+    <h1 class="page-title">장바구니</h1>
+    <div id="cart"></div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const FREE_SHIP = 50000;
+    const SHIP_FEE = 3500;
+
+    function draw() {
+      const items = Cart.get().map((i) => ({ ...i, p: findProduct(i.id) })).filter((i) => i.p);
+      const box = document.getElementById("cart");
+
+      if (!items.length) {
+        box.innerHTML = `<div class="empty"><p style="font-size:60px">🛒</p><p>장바구니가 비어 있어요.</p><br>
+          <a href="products.html" class="btn btn-red">쇼핑하러 가기</a></div>`;
+        return;
+      }
+
+      const subtotal = items.reduce((s, i) => s + i.p.sale * i.qty, 0);
+      const saved = items.reduce((s, i) => s + (i.p.price - i.p.sale) * i.qty, 0);
+      const ship = subtotal >= FREE_SHIP ? 0 : SHIP_FEE;
+
+      box.innerHTML = `
+        <div class="cart-layout">
+          <div>
+            ${items.map(({ p, qty }) => `
+              <div class="cart-item">
+                <a href="product.html?id=${p.id}">${thumb(p)}</a>
+                <div>
+                  <a href="product.html?id=${p.id}" class="name">${p.name} <small>${p.weight}</small></a>
+                  <p class="price"><strong>${won(p.sale * qty)}</strong></p>
+                </div>
+                <div class="qty">
+                  <button onclick="Cart.setQty(${p.id}, ${qty - 1}); draw()">−</button>
+                  <input value="${qty}" readonly>
+                  <button onclick="Cart.setQty(${p.id}, ${qty + 1}); draw()">+</button>
+                </div>
+                <button class="remove" onclick="Cart.remove(${p.id}); draw()" aria-label="삭제">✕</button>
+              </div>`).join("")}
+          </div>
+          <aside class="summary">
+            <div><span>상품금액</span><span>${won(subtotal)}</span></div>
+            <div><span>할인금액</span><span>-${won(saved)}</span></div>
+            <div><span>배송비</span><span>${ship ? won(ship) : "무료"}</span></div>
+            <div class="sum"><span>결제예정금액</span><span>${won(subtotal + ship)}</span></div>
+            ${ship ? `<p class="hint">${won(FREE_SHIP - subtotal)} 더 담으면 무료배송!</p>` : ""}
+            <button class="btn btn-red" onclick="alert('결제 기능은 다음 단계에서 만들 예정입니다.')">주문하기</button>
+          </aside>
+        </div>`;
+    }
+
+    draw();
+  </script>
+</body>
+</html>

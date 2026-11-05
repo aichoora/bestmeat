@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>상품 목록 - 베스트미트</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+
+  <main class="wrap">
+    <h1 class="page-title" id="title">전체 상품</h1>
+    <div class="toolbar">
+      <span id="count"></span>
+      <select id="sort">
+        <option value="reviews">인기순</option>
+        <option value="discount">할인율순</option>
+        <option value="low">낮은 가격순</option>
+        <option value="high">높은 가격순</option>
+        <option value="rating">평점순</option>
+      </select>
+    </div>
+    <div class="grid" id="list"></div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const cat = param("cat");
+    const q = (param("q") || "").trim();
+    const sortEl = document.getElementById("sort");
+    sortEl.value = param("sort") || "reviews";
+
+    const sorters = {
+      reviews: (a, b) => b.reviews - a.reviews,
+      discount: (a, b) => discount(b) - discount(a),
+      low: (a, b) => a.sale - b.sale,
+      high: (a, b) => b.sale - a.sale,
+      rating: (a, b) => b.rating - a.rating,
+    };
+
+    function draw() {
+      let list = PRODUCTS.filter((p) => (!cat || p.cat === cat) && (!q || (p.name + p.origin).includes(q)));
+      list.sort(sorters[sortEl.value]);
+
+      const catName = CATEGORIES.find((c) => c.id === cat)?.name;
+      document.getElementById("title").textContent = q ? `'${q}' 검색 결과` : (catName || "전체 상품");
+      document.getElementById("count").textContent = `총 ${list.length}개 상품`;
+      document.getElementById("list").innerHTML = list.length
+        ? list.map(productCard).join("")
+        : `<p class="empty" style="grid-column:1/-1">찾으시는 상품이 없어요.</p>`;
+    }
+
+    sortEl.addEventListener("change", draw);
+    draw();
+  </script>
+</body>
+</html>
