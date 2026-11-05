@@ -66,6 +66,26 @@ const Auth = {
     const s = this.current();
     return s ? this.users().find((u) => u.email === s.email) || null : null;
   },
+  // 로그인한 회원 정보 수정 (이름이 바뀌면 헤더 표시용 세션도 갱신)
+  updateProfile(patch) {
+    const me = this.current();
+    if (!me) return;
+    this.write(this.usersKey, this.users().map((u) => (u.email === me.email ? { ...u, ...patch } : u)));
+    if (patch.name) this.write(this.sessionKey, { ...me, name: patch.name });
+  },
+  async checkPassword(password) {
+    const user = this.profile();
+    return !!user && user.password === (await this.hash(password));
+  },
+  async changePassword(password) {
+    this.updateProfile({ password: await this.hash(password) });
+  },
+  withdraw() {
+    const me = this.current();
+    if (!me) return;
+    this.write(this.usersKey, this.users().filter((u) => u.email !== me.email));
+    try { localStorage.removeItem(this.sessionKey); } catch {}
+  },
 };
 
 // ---------- 주문 (시안용: localStorage에 저장) ----------
@@ -80,6 +100,11 @@ const Orders = {
     return me ? this.all().filter((o) => o.email === me.email) : [];
   },
   find(id) { return this.all().find((o) => o.id === id); },
+  update(id, patch) {
+    Auth.write(this.key, this.all().map((o) => (o.id === id ? { ...o, ...patch } : o)));
+  },
+  // 결제완료/입금대기 상태일 때만 취소 가능 (상품 준비가 시작되면 불가)
+  canCancel(o) { return o.status === "결제완료" || o.status === "입금대기"; },
   create(order) {
     const d = new Date();
     const pad = (n) => String(n).padStart(2, "0");
@@ -97,6 +122,15 @@ function cartSummary() {
   const saved = items.reduce((s, i) => s + (i.p.price - i.p.sale) * i.qty, 0);
   const ship = !items.length || subtotal >= SHIPPING.free ? 0 : SHIPPING.fee;
   return { items, subtotal, saved, ship };
+}
+
+// 휴대폰 번호 입력칸에 자동 하이픈 (010-1234-5678)
+const PHONE_RE = /^01[016789]-?\d{3,4}-?\d{4}$/;
+function phoneInput(input) {
+  input.addEventListener("input", () => {
+    const d = input.value.replace(/\D/g, "").slice(0, 11);
+    input.value = d.length < 4 ? d : d.length < 8 ? `${d.slice(0, 3)}-${d.slice(3)}` : `${d.slice(0, 3)}-${d.slice(3, d.length - 4)}-${d.slice(-4)}`;
+  });
 }
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -160,7 +194,7 @@ function renderLayout() {
         </form>
         <nav class="util">
           ${Auth.current()
-            ? `<span><b>${escapeHtml(Auth.current().name)}</b>님</span><a href="#" onclick="Auth.logout(); return false;">로그아웃</a>`
+            ? `<a href="mypage.html"><b>${escapeHtml(Auth.current().name)}</b>님 · 마이페이지</a><a href="#" onclick="Auth.logout(); return false;">로그아웃</a>`
             : `<a href="login.html">로그인</a><a href="signup.html">회원가입</a>`}
           <a href="cart.html" class="cart-link">🛒 장바구니 <i id="cart-count" hidden>0</i></a>
         </nav>

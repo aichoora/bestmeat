@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마이페이지 - 베스트미트</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+
+  <main class="wrap">
+    <h1 class="page-title">마이페이지</h1>
+
+    <!-- 요약 -->
+    <section class="my-summary" id="summary"></section>
+
+    <div class="my-layout">
+      <nav class="my-menu" id="menu">
+        <a href="#orders">📦 주문 내역</a>
+        <a href="#profile">👤 회원정보 수정</a>
+        <a href="#password">🔒 비밀번호 변경</a>
+        <a href="#withdraw">🚪 회원 탈퇴</a>
+      </nav>
+
+      <div>
+        <!-- 주문 내역 -->
+        <section class="tab" id="tab-orders">
+          <div class="section-head"><h2>주문 내역</h2>
+            <select id="period">
+              <option value="30">최근 1개월</option>
+              <option value="90">최근 3개월</option>
+              <option value="365">최근 1년</option>
+              <option value="0" selected>전체</option>
+            </select>
+          </div>
+          <div id="orders"></div>
+        </section>
+
+        <!-- 회원정보 수정 -->
+        <section class="tab" id="tab-profile" hidden>
+          <div class="section-head"><h2>회원정보 수정</h2></div>
+          <form class="box my-form" id="profile-form" novalidate>
+            <div class="field"><label>이메일</label><input id="p-email" readonly><p class="msg">이메일은 변경할 수 없습니다.</p></div>
+            <div class="field"><label for="p-name">이름 <i>*</i></label><input id="p-name" autocomplete="name"><p class="msg"></p></div>
+            <div class="field"><label for="p-phone">휴대폰 번호 <i>*</i></label><input id="p-phone" type="tel" inputmode="numeric"><p class="msg"></p></div>
+            <label class="check"><input type="checkbox" id="p-marketing"> 할인·이벤트 소식 받기</label>
+            <button class="btn btn-red">저장하기</button>
+          </form>
+        </section>
+
+        <!-- 비밀번호 변경 -->
+        <section class="tab" id="tab-password" hidden>
+          <div class="section-head"><h2>비밀번호 변경</h2></div>
+          <form class="box my-form" id="pw-form" novalidate>
+            <div class="field"><label for="pw-now">현재 비밀번호</label><input id="pw-now" type="password" autocomplete="current-password"><p class="msg"></p></div>
+            <div class="field"><label for="pw-new">새 비밀번호</label><input id="pw-new" type="password" autocomplete="new-password" placeholder="영문, 숫자 포함 8자 이상"><p class="msg"></p></div>
+            <div class="field"><label for="pw-new2">새 비밀번호 확인</label><input id="pw-new2" type="password" autocomplete="new-password"><p class="msg"></p></div>
+            <button class="btn btn-red">변경하기</button>
+          </form>
+        </section>
+
+        <!-- 회원 탈퇴 -->
+        <section class="tab" id="tab-withdraw" hidden>
+          <div class="section-head"><h2>회원 탈퇴</h2></div>
+          <form class="box my-form" id="wd-form" novalidate>
+            <div class="warn">
+              <b>탈퇴 전에 꼭 확인해 주세요</b>
+              <ul>
+                <li>보유한 쿠폰은 모두 사라지며 복구할 수 없습니다.</li>
+                <li>진행 중인 주문이 있으면 탈퇴할 수 없습니다.</li>
+                <li>같은 이메일로 다시 가입할 수 있지만, 이전 정보는 복구되지 않습니다.</li>
+              </ul>
+            </div>
+            <div class="field"><label for="wd-pw">비밀번호 확인</label><input id="wd-pw" type="password" autocomplete="current-password"><p class="msg"></p></div>
+            <label class="check"><input type="checkbox" id="wd-agree"> 위 내용을 확인했으며 탈퇴에 동의합니다</label>
+            <button class="btn btn-line">탈퇴하기</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    if (!Auth.current()) location.replace("login.html?next=mypage.html");
+
+    const e = escapeHtml;
+    const ACTIVE = ["결제완료", "입금대기", "상품준비중", "배송중"];
+    const statusClass = { 결제완료: "ok", 입금대기: "wait", 주문취소: "cancel" };
+
+    // ---------- 탭 전환 (주소 끝 #orders 등으로 구분) ----------
+    function showTab() {
+      const name = (location.hash || "#orders").slice(1);
+      const valid = ["orders", "profile", "password", "withdraw"].includes(name) ? name : "orders";
+      document.querySelectorAll(".tab").forEach((t) => (t.hidden = t.id !== "tab-" + valid));
+      document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.hash === "#" + valid));
+    }
+    window.addEventListener("hashchange", showTab);
+
+    // ---------- 요약 ----------
+    function drawSummary() {
+      const me = Auth.profile();
+      if (!me) return;
+      const orders = Orders.mine();
+      const active = orders.filter((o) => ACTIVE.includes(o.status)).length;
+      const spent = orders.filter((o) => o.status !== "주문취소").reduce((s, o) => s + o.amount.total, 0);
+      const coupons = orders.length === 0 ? 1 : 0;
+      $("summary").innerHTML = `
+        <div class="hello"><span class="avatar">${e(me.name.slice(0, 1))}</span>
+          <div><b>${e(me.name)}</b>님, 안녕하세요!<small>${e(me.email)}</small></div></div>
+        <a href="#orders"><small>진행 중인 주문</small><b>${active}</b></a>
+        <a href="#orders"><small>누적 구매금액</small><b>${won(spent)}</b></a>
+        <div><small>보유 쿠폰</small><b>${coupons}장</b></div>`;
+    }
+
+    // ---------- 주문 내역 ----------
+    function drawOrders() {
+      const days = Number($("period").value);
+      const since = Date.now() - days * 24 * 3600 * 1000;
+      const list = Orders.mine()
+        .filter((o) => !days || new Date(o.createdAt).getTime() >= since)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+      if (!list.length) {
+        $("orders").innerHTML = `<div class="empty"><p style="font-size:48px">📦</p><p>주문 내역이 없어요.</p><br><a href="products.html" class="btn btn-red">쇼핑하러 가기</a></div>`;
+        return;
+      }
+
+      $("orders").innerHTML = list.map((o) => {
+        const d = new Date(o.createdAt);
+        const first = o.items[0];
+        const p = findProduct(first.id);
+        const more = o.items.length > 1 ? ` 외 ${o.items.length - 1}건` : "";
+        return `
+          <article class="box order-card">
+            <div class="order-top">
+              <span><b>${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}</b> 주문 · ${o.id}</span>
+              <em class="status ${statusClass[o.status] || ""}">${o.status}</em>
+            </div>
+            <div class="order-item">
+              ${p ? thumb(p) : ""}
+              <div><p class="name">${e(first.name)}${more}</p><p class="origin">${o.status === "주문취소" ? "취소된 주문입니다" : `도착 희망일 ${o.deliveryDate}`}</p></div>
+              <strong>${won(o.amount.total)}</strong>
+            </div>
+            <div class="order-actions">
+              <a href="order-complete.html?id=${o.id}" class="btn btn-line">상세보기</a>
+              <button type="button" class="btn btn-line" onclick="reorder('${o.id}')">다시 담기</button>
+              ${Orders.canCancel(o) ? `<button type="button" class="btn btn-line danger" onclick="cancelOrder('${o.id}')">주문 취소</button>` : ""}
+            </div>
+          </article>`;
+      }).join("");
+    }
+    $("period").addEventListener("change", drawOrders);
+
+    function cancelOrder(id) {
+      const o = Orders.find(id);
+      if (!o || !Orders.canCancel(o)) return;
+      const refund = o.status === "입금대기" ? "" : `\n결제하신 ${won(o.amount.total)}은 3~5영업일 안에 환불됩니다.`;
+      if (!confirm(`주문번호 ${id}를 취소할까요?${refund}`)) return;
+      Orders.update(id, { status: "주문취소", canceledAt: new Date().toISOString() });
+      toast("주문이 취소되었습니다.");
+      drawOrders();
+      drawSummary();
+    }
+
+    function reorder(id) {
+      const o = Orders.find(id);
+      const items = o.items.filter((i) => findProduct(i.id));
+      items.forEach((i) => Cart.add(i.id, i.qty));
+      if (items.length < o.items.length) alert("판매가 끝난 상품은 제외하고 담았습니다.");
+      if (confirm("장바구니에 담았습니다. 장바구니로 이동할까요?")) location.href = "cart.html";
+    }
+
+    // ---------- 공통: 입력칸 오류 표시 ----------
+    function setField(input, err, ok = "") {
+      const field = input.closest(".field");
+      field.classList.toggle("invalid", !!err);
+      field.classList.toggle("valid", !err && !!ok);
+      field.querySelector(".msg").textContent = err || ok;
+      return !err;
+    }
+
+    // ---------- 회원정보 수정 ----------
+    function fillProfile() {
+      const me = Auth.profile();
+      if (!me) return;
+      $("p-email").value = me.email;
+      $("p-name").value = me.name;
+      $("p-phone").value = me.phone;
+      $("p-marketing").checked = !!me.marketing;
+    }
+    phoneInput($("p-phone"));
+    $("profile-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const name = $("p-name").value.trim();
+      const phone = $("p-phone").value.trim();
+      const ok = [
+        setField($("p-name"), name.length >= 2 ? "" : "이름을 2자 이상 입력해 주세요."),
+        setField($("p-phone"), PHONE_RE.test(phone) ? "" : "휴대폰 번호를 정확히 입력해 주세요."),
+      ].every(Boolean);
+      if (!ok) return;
+      Auth.updateProfile({ name, phone, marketing: $("p-marketing").checked });
+      renderLayout(); // 헤더의 이름 갱신
+      drawSummary();
+      toast("회원정보를 저장했습니다.");
+    });
+
+    // ---------- 비밀번호 변경 ----------
+    $("pw-form").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const now = $("pw-now").value, pw = $("pw-new").value, pw2 = $("pw-new2").value;
+      const ok = [
+        setField($("pw-now"), now ? "" : "현재 비밀번호를 입력해 주세요."),
+        setField($("pw-new"), pw.length < 8 ? "8자 이상 입력해 주세요."
+          : !/[A-Za-z]/.test(pw) || !/\d/.test(pw) ? "영문과 숫자를 모두 포함해 주세요."
+          : pw === now ? "현재 비밀번호와 다른 비밀번호를 입력해 주세요." : ""),
+        setField($("pw-new2"), pw2 && pw2 === pw ? "" : "새 비밀번호가 일치하지 않습니다."),
+      ].every(Boolean);
+      if (!ok) return;
+      if (!(await Auth.checkPassword(now))) { setField($("pw-now"), "현재 비밀번호가 올바르지 않습니다."); return; }
+      await Auth.changePassword(pw);
+      $("pw-form").reset();
+      document.querySelectorAll("#pw-form .field").forEach((f) => f.classList.remove("invalid", "valid"));
+      toast("비밀번호를 변경했습니다.");
+    });
+
+    // ---------- 회원 탈퇴 ----------
+    $("wd-form").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      if (Orders.mine().some((o) => ACTIVE.includes(o.status))) {
+        alert("진행 중인 주문이 있어 탈퇴할 수 없습니다.\n주문을 취소하거나 배송이 끝난 뒤 다시 시도해 주세요.");
+        return;
+      }
+      if (!(await Auth.checkPassword($("wd-pw").value))) { setField($("wd-pw"), "비밀번호가 올바르지 않습니다."); return; }
+      setField($("wd-pw"), "");
+      if (!$("wd-agree").checked) { toast("탈퇴 동의에 체크해 주세요."); return; }
+      if (!confirm("정말 탈퇴하시겠어요? 이 작업은 되돌릴 수 없습니다.")) return;
+      Auth.withdraw();
+      alert("탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.");
+      location.replace("index.html");
+    });
+
+    // ---------- 시작 ----------
+    showTab();
+    drawSummary();
+    drawOrders();
+    fillProfile();
+  </script>
+</body>
+</html>

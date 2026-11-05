@@ -153,10 +153,7 @@
     });
 
     // 연락처 자동 하이픈
-    $("r-phone").addEventListener("input", (e) => {
-      const d = e.target.value.replace(/\D/g, "").slice(0, 11);
-      e.target.value = d.length < 4 ? d : d.length < 8 ? `${d.slice(0, 3)}-${d.slice(3)}` : `${d.slice(0, 3)}-${d.slice(3, d.length - 4)}-${d.slice(-4)}`;
-    });
+    phoneInput($("r-phone"));
 
     // ----- 주소 검색 (다음 우편번호 서비스) -----
     // 팝업 창 대신 화면 안의 레이어에 검색창을 띄웁니다.
@@ -246,7 +243,7 @@
       const payMethod = document.querySelector("input[name=pay]:checked").value;
       const checks = [
         setField($("r-name"), $("r-name").value.trim().length >= 2 ? "" : "받는 분 이름을 입력해 주세요."),
-        setField($("r-phone"), /^01[016789]-?\d{3,4}-?\d{4}$/.test($("r-phone").value.trim()) ? "" : "연락처를 정확히 입력해 주세요."),
+        setField($("r-phone"), PHONE_RE.test($("r-phone").value.trim()) ? "" : "연락처를 정확히 입력해 주세요."),
         setField($("addr2"), !$("zip").value.trim() || !$("addr1").value.trim() ? "주소 검색으로 주소를 입력해 주세요."
           : !$("addr2").value.trim() ? "상세 주소를 입력해 주세요." : ""),
       ];

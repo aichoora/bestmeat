@@ -84,7 +84,7 @@
         return $("password2").value === $("password").value ? "" : "비밀번호가 일치하지 않습니다.";
       },
       name: () => (val("name").length >= 2 ? "" : "이름을 2자 이상 입력해 주세요."),
-      phone: () => (/^01[016789]-?\d{3,4}-?\d{4}$/.test(val("phone")) ? "" : "휴대폰 번호를 정확히 입력해 주세요."),
+      phone: () => (PHONE_RE.test(val("phone")) ? "" : "휴대폰 번호를 정확히 입력해 주세요."),
     };
     const okText = { email: "사용 가능한 이메일입니다.", password: "사용 가능한 비밀번호입니다.", password2: "비밀번호가 일치합니다." };
 
@@ -108,10 +108,7 @@
     });
 
     // 휴대폰 번호 자동 하이픈
-    $("phone").addEventListener("input", (e) => {
-      const d = e.target.value.replace(/\D/g, "").slice(0, 11);
-      e.target.value = d.length < 4 ? d : d.length < 8 ? `${d.slice(0, 3)}-${d.slice(3)}` : `${d.slice(0, 3)}-${d.slice(3, d.length - 4)}-${d.slice(-4)}`;
-    });
+    phoneInput($("phone"));
 
     // 약관 전체 동의
     const agrees = [...document.querySelectorAll(".agree")];
