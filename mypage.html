@@ -20,6 +20,8 @@
       <nav class="my-menu" id="menu">
         <a href="#orders"><i data-icon="box"></i> 주문 내역</a>
         <a href="#profile"><i data-icon="user"></i> 회원정보 수정</a>
+        <a href="#wish"><i data-icon="heart"></i> 찜한 상품</a>
+        <a href="#recent"><i data-icon="clock"></i> 최근 본 상품</a>
         <a href="#reviews"><i data-icon="star"></i> 내 리뷰</a>
         <a href="#password"><i data-icon="lock"></i> 비밀번호 변경</a>
         <a href="#withdraw"><i data-icon="logout"></i> 회원 탈퇴</a>
@@ -37,6 +39,19 @@
             </select>
           </div>
           <div id="orders"></div>
+        </section>
+
+        <!-- 찜한 상품 -->
+        <section class="tab" id="tab-wish" hidden>
+          <div class="section-head"><h2>찜한 상품 <small id="wish-count"></small></h2></div>
+          <div id="wish-list"></div>
+        </section>
+
+        <!-- 최근 본 상품 -->
+        <section class="tab" id="tab-recent" hidden>
+          <div class="section-head"><h2>최근 본 상품 <small id="recent-count"></small></h2>
+            <button type="button" class="link-btn" id="recent-clear">전체 삭제</button></div>
+          <div id="recent-list"></div>
         </section>
 
         <!-- 내 리뷰 -->
@@ -104,7 +119,7 @@
     // ---------- 탭 전환 (주소 끝 #orders 등으로 구분) ----------
     function showTab() {
       const name = (location.hash || "#orders").slice(1);
-      const valid = ["orders", "reviews", "profile", "password", "withdraw"].includes(name) ? name : "orders";
+      const valid = ["orders", "wish", "recent", "reviews", "profile", "password", "withdraw"].includes(name) ? name : "orders";
       document.querySelectorAll(".tab").forEach((t) => (t.hidden = t.id !== "tab-" + valid));
       document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.hash === "#" + valid));
     }
@@ -178,6 +193,31 @@
       drawOrders();
       drawSummary();
     }
+
+    // ---------- 찜 · 최근 본 상품 ----------
+    function drawWish() {
+      const list = Wish.products();
+      $("wish-count").textContent = list.length || "";
+      $("wish-list").innerHTML = list.length
+        ? `<div class="grid grid-3">${list.map(productCard).join("")}</div>`
+        : `<div class="empty small"><p>찜한 상품이 없어요.</p><p class="muted-text">상품 사진의 하트를 누르면 여기에 모아 볼 수 있어요.</p><br><a href="products.html" class="btn btn-red">상품 보러 가기</a></div>`;
+    }
+    function drawRecent() {
+      const list = Recent.products();
+      $("recent-count").textContent = list.length || "";
+      $("recent-clear").hidden = !list.length;
+      $("recent-list").innerHTML = list.length
+        ? `<div class="grid grid-3">${list.map(productCard).join("")}</div>`
+        : `<div class="empty small"><p>최근 본 상품이 없어요.</p><br><a href="products.html" class="btn btn-red">상품 보러 가기</a></div>`;
+    }
+    $("recent-clear").addEventListener("click", () => {
+      if (!confirm("최근 본 상품 기록을 모두 지울까요?")) return;
+      Recent.clear();
+      drawRecent();
+      renderQuickBar();
+    });
+    // 찜을 해제하면 찜 목록에서 바로 빠지게
+    document.addEventListener("wishchange", drawWish);
 
     // ---------- 리뷰 ----------
     function reviewOrder(id) {
@@ -295,6 +335,8 @@
     drawSummary();
     drawOrders();
     drawMyReviews();
+    drawWish();
+    drawRecent();
     fillProfile();
   </script>
 </body>

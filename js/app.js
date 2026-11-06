@@ -94,6 +94,7 @@ const Auth = {
     if (!user) return false;
     this.write(this.sessionKey, { email: user.email, name: user.name, role: user.role || "member" });
     Cart.mergeGuest();
+    Recent.mergeGuest();
     return true;
   },
   logout() {
@@ -124,6 +125,8 @@ const Auth = {
     if (!me || me.role === "admin") return;
     this.write(this.usersKey, this.users().filter((u) => u.email !== me.email));
     Cart.clearFor(me.email);
+    Wish.clearFor(me.email);
+    Recent.clearFor(me.email);
     try { localStorage.removeItem(this.sessionKey); } catch {}
   },
 };
@@ -421,6 +424,82 @@ function addToCart(id, qty = 1, opt) {
   return true;
 }
 
+// ---------- 찜 · 최근 본 상품 (회원별로 localStorage에 저장) ----------
+// 찜은 회원만, 최근 본 상품은 비회원도 저장 (로그인하면 회원 쪽으로 합쳐짐)
+const Wish = {
+  base: "bestmeat_wish",
+  get key() { const me = Auth.current(); return me ? `${this.base}:${me.email}` : null; },
+  ids() { return this.key ? Auth.read(this.key, []) : []; },
+  has(id) { return this.ids().includes(Number(id)); },
+  // 찜 상태를 바꾸고, 바뀐 뒤 찜 여부를 돌려줌
+  toggle(id) {
+    id = Number(id);
+    const list = this.ids();
+    const on = !list.includes(id);
+    Auth.write(this.key, on ? [id, ...list] : list.filter((x) => x !== id));
+    return on;
+  },
+  products() { return this.ids().map(findProduct).filter(Boolean); },
+  clearFor(email) { try { localStorage.removeItem(`${this.base}:${email}`); } catch {} },
+};
+const Recent = {
+  base: "bestmeat_recent",
+  max: 20,
+  keyFor(email) { return email ? `${this.base}:${email}` : this.base; },
+  get key() { return this.keyFor(Auth.current()?.email); },
+  ids() { return Auth.read(this.key, []); },
+  add(id) {
+    id = Number(id);
+    Auth.write(this.key, [id, ...this.ids().filter((x) => x !== id)].slice(0, this.max));
+  },
+  clear() { try { localStorage.removeItem(this.key); } catch {} },
+  products() { return this.ids().map(findProduct).filter(Boolean); },
+  mergeGuest() {
+    const guest = Auth.read(this.base, []);
+    if (!guest.length) return;
+    Auth.write(this.key, [...new Set([...guest, ...this.ids()])].slice(0, this.max));
+    try { localStorage.removeItem(this.base); } catch {}
+  },
+  clearFor(email) { try { localStorage.removeItem(this.keyFor(email)); } catch {} },
+};
+
+// 하트 버튼 (상품 카드, 상품 상세에서 사용)
+function wishButton(p, cls = "btn-wish") {
+  const on = Wish.has(p.id);
+  return `<button type="button" class="${cls} ${on ? "on" : ""}" data-wish="${p.id}" aria-pressed="${on}" aria-label="찜하기" onclick="toggleWish(${p.id})">${icon("heart")}</button>`;
+}
+function toggleWish(id) {
+  if (!Auth.current()) {
+    const here = (location.pathname.split("/").pop() || "index.html") + location.search;
+    if (confirm("찜하려면 로그인이 필요합니다. 로그인 하시겠어요?")) location.href = `login.html?next=${encodeURIComponent(here)}`;
+    return;
+  }
+  const on = Wish.toggle(id);
+  // 같은 상품의 하트가 화면에 여러 개 있어도 함께 바뀌게
+  document.querySelectorAll(`[data-wish="${Number(id)}"]`).forEach((b) => {
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on);
+  });
+  toast(on ? "찜한 상품에 담았습니다" : "찜을 해제했습니다");
+  document.dispatchEvent(new CustomEvent("wishchange"));
+}
+
+// 넓은 화면 오른쪽에 붙는 '최근 본 상품' 바
+function renderQuickBar() {
+  document.querySelector(".quick-recent")?.remove();
+  const list = Recent.products().slice(0, 3);
+  const bar = document.createElement("aside");
+  bar.className = "quick-recent";
+  bar.setAttribute("aria-label", "최근 본 상품");
+  bar.innerHTML = `
+    <b>최근 본 상품</b>
+    ${list.length ? list.map((p) => `<a href="product.html?id=${p.id}" class="q" title="${escapeHtml(p.name)}">${thumb(p)}</a>`).join("")
+      : `<p class="none">아직 없어요</p>`}
+    ${Recent.ids().length > 3 ? `<a href="mypage.html#recent" class="more">더보기</a>` : ""}
+    <button type="button" class="top" onclick="scrollTo({ top: 0, behavior: 'smooth' })">▲ TOP</button>`;
+  document.body.appendChild(bar);
+}
+
 // ---------- 상품 카드 ----------
 // 사진이 있으면 사진, 없거나 불러오지 못하면 이모지를 보여줌
 function thumb(p, big = false) {
@@ -436,6 +515,7 @@ function productCard(p) {
   return `<article class="card">
     <div class="thumb-wrap">
       <a href="product.html?id=${p.id}">${thumb(p)}</a>
+      ${wishButton(p)}
       ${p.soldOut ? "" : `<button class="btn-cart" onclick="addToCart(${p.id})" aria-label="장바구니 담기">${icon("cart")} 담기</button>`}
     </div>
     <div class="card-body">
@@ -468,6 +548,8 @@ const ICONS = {
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   ticket: '<path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/><path d="M15 7v2M15 11v2M15 15v2"/>',
   star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  heart: '<path d="M12 20s-7.5-4.6-9.2-9.4A4.9 4.9 0 0 1 12 6.4a4.9 4.9 0 0 1 9.2 4.2C19.5 15.4 12 20 12 20z"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
   pen: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
 };
 function icon(name) {
@@ -523,6 +605,7 @@ function renderLayout() {
         </div>
       </div>`;
   }
+  if (header) renderQuickBar();
   updateCartCount();
 }
 
