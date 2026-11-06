@@ -120,11 +120,11 @@
       <!-- 베스트 관리 -->
       <section class="tab" id="tab-best" hidden>
         <h1>베스트 관리</h1>
-        <p class="tab-desc">베스트 순위는 판매량과 리뷰로 자동 계산됩니다. 여기서 <b>MD 추천</b> 상품을 맨 앞에 고정하거나, 순위에서 뺄 상품을 정할 수 있어요.</p>
+        <p class="tab-desc">베스트 순위는 판매량과 리뷰로 자동 계산됩니다. 여기서 고른 <b>현수추천</b> 상품은 상단 메뉴의 '현수추천' 페이지에 이 순서대로 보이고, 베스트 맨 앞에도 고정됩니다. 순위에서 뺄 상품도 정할 수 있어요.</p>
         <div class="best-admin">
           <div class="panel">
-            <div class="panel-head"><h2>MD 추천 (맨 앞 고정)</h2><small class="muted-text">위에서부터 1위, 2위…</small></div>
-            <div class="inline best-add"><select id="pin-select" aria-label="MD 추천에 넣을 상품"></select><button type="button" class="btn btn-red" onclick="addPin()">추가</button></div>
+            <div class="panel-head"><h2>현수추천 (맨 앞 고정)</h2><small class="muted-text">위에서부터 1위, 2위…</small></div>
+            <div class="inline best-add"><select id="pin-select" aria-label="현수추천에 넣을 상품"></select><button type="button" class="btn btn-red" onclick="addPin()">추가</button></div>
             <ol class="best-rows" id="pin-list"></ol>
           </div>
           <div class="panel">
@@ -821,21 +821,21 @@
           <button type="button" class="btn btn-line sm" onclick="movePin(${id}, -1)" ${i === 0 ? "disabled" : ""} aria-label="위로">▲</button>
           <button type="button" class="btn btn-line sm" onclick="movePin(${id}, 1)" ${i === pins.length - 1 ? "disabled" : ""} aria-label="아래로">▼</button>
           <button type="button" class="btn btn-line sm danger" onclick="removePin(${id})">빼기</button></li>`).join("")
-        : `<li class="empty small">MD 추천 상품이 없어요. 판매순으로만 보여줍니다.</li>`;
+        : `<li class="empty small">현수추천 상품이 없어요. 판매순으로만 보여줍니다.</li>`;
       const exs = excluded.filter(name);
       $("ex-list").innerHTML = exs.length ? exs.map((id) => `
         <li><span class="row-name">${e(name(id))}</span>
           <button type="button" class="btn btn-line sm" onclick="removeExclude(${id})">다시 포함</button></li>`).join("")
         : `<li class="empty small">제외한 상품이 없어요.</li>`;
       $("best-preview").innerHTML = bestList(PRODUCTS).slice(0, 10).map((p) =>
-        `<li>${e(p.name)}${pinned.includes(p.id) ? ` <em class="md-pick static">MD 추천</em>` : ""}</li>`).join("");
+        `<li>${e(p.name)}${pinned.includes(p.id) ? ` <em class="md-pick static">현수추천</em>` : ""}</li>`).join("");
     }
     function saveBest(cfg, msg) { BestConfig.save(cfg); toast(msg); drawBest(); }
     function addPin() {
       const id = Number($("pin-select").value);
       if (!id) return;
       const c = BestConfig.get();
-      saveBest({ pinned: [...c.pinned, id], excluded: c.excluded.filter((x) => x !== id) }, "MD 추천에 넣었습니다.");
+      saveBest({ pinned: [...c.pinned, id], excluded: c.excluded.filter((x) => x !== id) }, "현수추천에 넣었습니다.");
     }
     function movePin(id, d) {
       const c = BestConfig.get();
@@ -844,7 +844,7 @@
       [list[i], list[i + d]] = [list[i + d], list[i]];
       saveBest({ ...c, pinned: list }, "순서를 바꿨습니다.");
     }
-    function removePin(id) { const c = BestConfig.get(); saveBest({ ...c, pinned: c.pinned.filter((x) => x !== id) }, "MD 추천에서 뺐습니다."); }
+    function removePin(id) { const c = BestConfig.get(); saveBest({ ...c, pinned: c.pinned.filter((x) => x !== id) }, "현수추천에서 뺐습니다."); }
     function addExclude() {
       const id = Number($("ex-select").value);
       if (!id) return;

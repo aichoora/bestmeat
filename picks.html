@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>현수추천 - 베스트미트</title>
+  <link rel="icon" href="images/logo-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+
+  <main class="wrap">
+    <section class="picks-hero">
+      <img src="images/icons/pick.svg" alt="" class="picks-badge">
+      <div>
+        <h1>현수추천</h1>
+        <p>베스트미트 현수가 직접 골라 자신 있게 추천하는 상품이에요.</p>
+      </div>
+    </section>
+    <p class="rank-note" id="count"></p>
+    <div class="grid rank-grid" id="list"></div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/reviews-sample.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const list = hyunsooPicks();
+    document.getElementById("count").textContent = list.length ? `현수추천 상품 ${list.length}개` : "";
+    document.getElementById("list").innerHTML = list.length
+      ? list.map((p, i) => `<div class="rank-item"><span class="rank-no pick-no">${i + 1}</span>${productCard(p)}</div>`).join("")
+      : `<p class="empty" style="grid-column:1/-1">지금은 현수추천 상품이 없어요. <a href="ranking.html" class="link">베스트 보러 가기 ›</a></p>`;
+  </script>
+</body>
+</html>

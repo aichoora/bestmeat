@@ -422,16 +422,17 @@ function byPopularity(list) {
   return [...list].sort((a, b) => score(b) - score(a));
 }
 
-// ---------- 베스트 관리 (관리자가 MD 추천 고정 · 제외 설정) ----------
+// ---------- 베스트 관리 (관리자가 현수추천 고정 · 제외 설정) ----------
 const BestConfig = {
   key: "bestmeat_best",
+  defaults: { pinned: [1, 7, 12], excluded: [] }, // 관리자가 아직 설정하지 않았을 때의 현수추천
   get() {
-    const v = Auth.read(this.key, {}) || {};
+    const v = Auth.read(this.key, null) || this.defaults;
     return { pinned: (v.pinned || []).map(Number), excluded: (v.excluded || []).map(Number) };
   },
   save({ pinned, excluded }) { Auth.write(this.key, { pinned: [...new Set(pinned)], excluded: [...new Set(excluded)] }); },
 };
-// 베스트 목록: 제외한 상품은 빼고, MD 추천은 정한 순서대로 맨 앞에, 나머지는 판매순
+// 베스트 목록: 제외한 상품은 빼고, 현수추천은 정한 순서대로 맨 앞에, 나머지는 판매순
 function bestList(list, { pins = true } = {}) {
   const { pinned, excluded } = BestConfig.get();
   const rest = list.filter((p) => !excluded.includes(p.id));
@@ -440,6 +441,11 @@ function bestList(list, { pins = true } = {}) {
   return [...top, ...byPopularity(rest.filter((p) => !pinned.includes(p.id)))];
 }
 const isPinnedBest = (id) => BestConfig.get().pinned.includes(Number(id));
+// 현수추천 상품 (정한 순서대로, 삭제·제외된 상품 빼고)
+function hyunsooPicks() {
+  const { pinned, excluded } = BestConfig.get();
+  return pinned.filter((id) => !excluded.includes(id)).map(findProduct).filter(Boolean);
+}
 
 // 장바구니 금액 계산 (장바구니, 주문서에서 함께 사용). 품절 상품은 주문에서 제외.
 function cartSummary() {
@@ -668,6 +674,7 @@ function renderLayout() {
         ${CATEGORIES.map((c) => `<a href="products.html?cat=${c.id}" class="${page === "products.html" && param("cat") === c.id ? "on" : ""}">${c.name}</a>`).join("")}
         <span class="gnb-sep" aria-hidden="true"></span>
         <a href="ranking.html" class="gnb-hot ${page === "ranking.html" ? "on" : ""}"><img src="images/icons/fire.svg" alt="" class="gnb-ico">베스트</a>
+        <a href="picks.html" class="gnb-hot ${page === "picks.html" ? "on" : ""}"><img src="images/icons/pick.svg" alt="" class="gnb-ico">현수추천</a>
         <a href="events.html" class="gnb-hot ${page === "events.html" || page === "event.html" ? "on" : ""}"><img src="images/icons/sale.svg" alt="" class="gnb-ico">이벤트</a>
       </nav>`;
   }
