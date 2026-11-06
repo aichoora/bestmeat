@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Jua&family=Fredoka:wght@500&display=swap");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Jua&family=Fredoka:wght@500&display=swap");
 
 :root {
   --red: #c62828;
@@ -11,7 +12,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: "Noto Sans KR", sans-serif; color: var(--ink); background: #fff; line-height: 1.5; }
+body { font-family: "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", sans-serif; color: var(--ink); background: #fff; line-height: 1.5; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; cursor: pointer; border: 0; }
 .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
@@ -23,7 +24,7 @@ button { font: inherit; cursor: pointer; border: 0; }
 .logo { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); flex-shrink: 0; }
 .logo-icon { width: 44px; height: 40px; }
 .logo-text { display: flex; flex-direction: column; }
-.logo-name { font-family: "Jua", "Noto Sans KR", sans-serif; font-size: 30px; line-height: 1; font-weight: 400; }
+.logo-name { font-family: "Jua", "Pretendard Variable", sans-serif; font-size: 30px; line-height: 1; font-weight: 400; }
 .logo-name em { font-style: normal; color: var(--red); }
 .logo-sub { font-family: "Fredoka", sans-serif; font-size: 11px; letter-spacing: 3px; color: #b07a6e; margin-top: 3px; }
 .logo.small .logo-icon { width: 36px; height: 33px; }
@@ -38,7 +39,7 @@ button { font: inherit; cursor: pointer; border: 0; }
 .util { display: flex; gap: 18px; font-size: 14px; margin-left: auto; white-space: nowrap; }
 .cart-link { position: relative; font-weight: 700; }
 #cart-count { position: absolute; top: -8px; right: -14px; background: var(--red); color: #fff; font-style: normal; font-size: 11px; min-width: 18px; height: 18px; border-radius: 9px; text-align: center; line-height: 18px; padding: 0 4px; }
-.gnb { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; gap: 28px; font-weight: 700; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.gnb { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; gap: 28px; font-weight: 600; border-bottom: 1px solid var(--line); overflow-x: auto; }
 .gnb a { padding: 12px 0; border-bottom: 3px solid transparent; white-space: nowrap; }
 .gnb a:hover, .gnb a.on { color: var(--red); border-color: var(--red); }
 
