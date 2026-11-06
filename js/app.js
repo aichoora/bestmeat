@@ -603,8 +603,8 @@ function renderLayout() {
         <a href="products.html" class="${page === "products.html" && !param("cat") && !param("q") ? "on" : ""}">전체</a>
         ${CATEGORIES.map((c) => `<a href="products.html?cat=${c.id}" class="${page === "products.html" && param("cat") === c.id ? "on" : ""}">${c.name}</a>`).join("")}
         <span class="gnb-sep" aria-hidden="true"></span>
-        <a href="ranking.html" class="${page === "ranking.html" ? "on" : ""}">랭킹</a>
-        <a href="events.html" class="gnb-event ${page === "events.html" || page === "event.html" ? "on" : ""}">기획전</a>
+        <a href="ranking.html" class="gnb-hot ${page === "ranking.html" ? "on" : ""}"><img src="images/icons/fire.svg" alt="" class="gnb-ico">베스트</a>
+        <a href="events.html" class="gnb-hot ${page === "events.html" || page === "event.html" ? "on" : ""}"><img src="images/icons/sale.svg" alt="" class="gnb-ico">이벤트</a>
       </nav>`;
   }
   const footer = document.getElementById("footer");

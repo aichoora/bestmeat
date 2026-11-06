@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>기획전 - 베스트미트</title>
+  <title>이벤트 - 베스트미트</title>
   <link rel="icon" href="images/logo-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -23,7 +23,7 @@
     const main = document.getElementById("main");
 
     if (!ev) {
-      main.innerHTML = `<main class="wrap"><p class="empty">기획전을 찾을 수 없습니다. <a href="events.html" style="color:var(--red)">기획전 목록으로</a></p></main>`;
+      main.innerHTML = `<main class="wrap"><p class="empty">이벤트를 찾을 수 없습니다. <a href="events.html" style="color:var(--red)">이벤트 목록으로</a></p></main>`;
     } else {
       document.title = `${ev.title} - 베스트미트`;
       const s = eventStatus(ev);
@@ -41,10 +41,10 @@
           </div>
         </section>
         <main class="wrap">
-          ${s.cls === "ended" ? `<p class="event-ended-note">종료된 기획전입니다. 상품은 일반 가격으로 구매하실 수 있어요.</p>` : ""}
+          ${s.cls === "ended" ? `<p class="event-ended-note">종료된 이벤트입니다. 상품은 일반 가격으로 구매하실 수 있어요.</p>` : ""}
           <ul class="event-benefits">${ev.benefits.map((b) => `<li>${icon("check")}${b}</li>`).join("")}</ul>
           <section class="section">
-            <div class="section-head"><h2>기획전 상품 <small>${items.length}</small></h2><a href="events.html">다른 기획전 ›</a></div>
+            <div class="section-head"><h2>이벤트 상품 <small>${items.length}</small></h2><a href="events.html">다른 이벤트 ›</a></div>
             <div class="grid">${items.map(productCard).join("") || `<p class="empty" style="grid-column:1/-1">준비 중인 상품이 없어요.</p>`}</div>
           </section>
         </main>`;

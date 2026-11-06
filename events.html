@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>기획전 - 베스트미트</title>
+  <title>이벤트 - 베스트미트</title>
   <link rel="icon" href="images/logo-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -11,10 +11,10 @@
   <header id="header"></header>
 
   <main class="wrap">
-    <h1 class="page-title">기획전</h1>
-    <div class="chips small event-filter" id="filter" role="radiogroup" aria-label="기획전 상태">
+    <h1 class="page-title">이벤트</h1>
+    <div class="chips small event-filter" id="filter" role="radiogroup" aria-label="이벤트 상태">
       <label><input type="radio" name="state" value="live" checked><span>진행중</span></label>
-      <label><input type="radio" name="state" value="ended"><span>종료된 기획전</span></label>
+      <label><input type="radio" name="state" value="ended"><span>종료된 이벤트</span></label>
     </div>
     <div class="event-grid" id="list"></div>
   </main>
@@ -34,7 +34,7 @@
         .sort((a, b) => (state === "ended" ? b.end.localeCompare(a.end) : a.end.localeCompare(b.end)));
       document.getElementById("list").innerHTML = list.length
         ? list.map(eventCard).join("")
-        : `<p class="empty" style="grid-column:1/-1">${state === "ended" ? "종료된 기획전이 없어요." : "진행 중인 기획전이 없어요."}</p>`;
+        : `<p class="empty" style="grid-column:1/-1">${state === "ended" ? "종료된 이벤트가 없어요." : "진행 중인 이벤트가 없어요."}</p>`;
     }
     document.querySelectorAll("input[name=state]").forEach((r) => r.addEventListener("change", draw));
     draw();

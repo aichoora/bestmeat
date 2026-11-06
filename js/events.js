@@ -1,9 +1,9 @@
-// 기획전 데이터 (시안용). 기간이 지나면 자동으로 '종료'로 표시됩니다.
+// 이벤트 데이터 (시안용). 기간이 지나면 자동으로 '종료'로 표시됩니다.
 const EVENTS = [
   {
     id: 1, tag: "PREMIUM 한우", title: "한우 프리미엄 위크", sub: "1++ 등급 한우를 특별한 가격에",
     img: "images/banners/1.jpg", start: "2026-11-01", end: "2026-11-30",
-    benefits: ["기획전 상품 최대 14% 할인", "5만원 이상 무료배송", "보자기 선물 포장 무료"],
+    benefits: ["이벤트 상품 최대 14% 할인", "5만원 이상 무료배송", "보자기 선물 포장 무료"],
     products: [1, 2, 14],
   },
   {
@@ -26,7 +26,7 @@ const EVENTS = [
   },
 ];
 
-// 기획전 상태: { label: "진행중" | "오픈 예정" | "종료", dday: "D-9" | "오늘 마감" | "" }
+// 이벤트 상태: { label: "진행중" | "오픈 예정" | "종료", dday: "D-9" | "오늘 마감" | "" }
 function eventStatus(ev, now = new Date()) {
   const start = new Date(ev.start + "T00:00:00");
   const end = new Date(ev.end + "T23:59:59");
@@ -38,7 +38,7 @@ function eventStatus(ev, now = new Date()) {
 const eventPeriod = (ev) => `${ev.start.replace(/-/g, ".")} ~ ${ev.end.slice(5).replace("-", ".")}`;
 const findEvent = (id) => EVENTS.find((e) => e.id === Number(id));
 
-// 기획전 카드 (기획전 목록, 메인에서 사용)
+// 이벤트 카드 (이벤트 목록, 메인에서 사용)
 function eventCard(ev) {
   const s = eventStatus(ev);
   return `<a href="event.html?id=${ev.id}" class="event-card ${s.cls}">

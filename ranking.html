@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>랭킹 - 베스트미트</title>
+  <title>베스트 - 베스트미트</title>
   <link rel="icon" href="images/logo-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -11,10 +11,10 @@
   <header id="header"></header>
 
   <main class="wrap">
-    <h1 class="page-title">랭킹</h1>
-    <div class="rank-tabs" role="tablist" aria-label="랭킹 기준">
-      <button type="button" role="tab" data-by="sales">판매 랭킹</button>
-      <button type="button" role="tab" data-by="rating">평점 랭킹</button>
+    <h1 class="page-title">베스트</h1>
+    <div class="rank-tabs" role="tablist" aria-label="베스트 기준">
+      <button type="button" role="tab" data-by="sales">판매 베스트</button>
+      <button type="button" role="tab" data-by="rating">평점 베스트</button>
     </div>
     <div class="chips small rank-cats" id="cats" role="radiogroup" aria-label="카테고리"></div>
     <p class="rank-note" id="note"></p>
@@ -52,7 +52,7 @@
       list = list.slice(0, 20);
       document.getElementById("list").innerHTML = list.length
         ? list.map((p, i) => `<div class="rank-item"><span class="rank-no ${i < 3 ? "top r" + (i + 1) : ""}">${i + 1}</span>${productCard(p)}</div>`).join("")
-        : `<p class="empty" style="grid-column:1/-1">랭킹에 오른 상품이 없어요.</p>`;
+        : `<p class="empty" style="grid-column:1/-1">베스트에 오른 상품이 없어요.</p>`;
       history.replaceState(null, "", `ranking.html?by=${state.by}${state.cat ? "&cat=" + state.cat : ""}`);
     }
 

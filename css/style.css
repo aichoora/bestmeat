@@ -43,9 +43,11 @@ button { font: inherit; cursor: pointer; border: 0; }
 .gnb a { padding: 12px 0; border-bottom: 3px solid transparent; white-space: nowrap; }
 .gnb a:hover, .gnb a.on { color: var(--red); border-color: var(--red); }
 .gnb-sep { flex: 0 0 1px; height: 14px; background: #ddd; align-self: center; margin: 0 -8px; }
-.gnb a.gnb-event { color: var(--red); }
+.gnb a.gnb-hot { display: inline-flex; align-items: center; gap: 5px; color: var(--red); font-weight: 800; font-size: 17px; }
+.gnb-ico { width: 22px; height: 22px; transition: transform .2s; }
+.gnb a.gnb-hot:hover .gnb-ico { transform: rotate(-8deg) scale(1.12); }
 
-/* ---------- 기획전 ---------- */
+/* ---------- 이벤트 ---------- */
 .event-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
 .event-card { display: block; border-radius: var(--radius); overflow: hidden; background: #fff; border: 1px solid var(--line); transition: transform .15s, box-shadow .15s; }
 .event-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
@@ -69,7 +71,7 @@ button { font: inherit; cursor: pointer; border: 0; }
 .event-benefits .ic { color: var(--red); }
 .event-ended-note { margin-top: 24px; padding: 14px 18px; border-radius: 8px; background: #f3f3f3; color: #555; }
 
-/* ---------- 랭킹 ---------- */
+/* ---------- 베스트 ---------- */
 .rank-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--line); margin-bottom: 16px; }
 .rank-tabs button { background: none; padding: 12px 22px; font-size: 16px; font-weight: 600; color: var(--gray); border-bottom: 3px solid transparent; margin-bottom: -2px; }
 .rank-tabs button.on { color: var(--ink); border-color: var(--ink); }
@@ -523,6 +525,9 @@ footer .logo { margin-bottom: 10px; }
 @media (max-width: 900px) {
   .grid, .grid.grid-3 { grid-template-columns: repeat(2, 1fr); gap: 16px; }
   .event-grid { grid-template-columns: 1fr; gap: 16px; }
+  /* 휴대폰: 메뉴가 길어 옆으로 밀리므로 베스트·이벤트를 맨 앞으로 */
+  .gnb a.gnb-hot { order: -2; }
+  .gnb-sep { order: -1; margin: 0 -4px; }
   .event-hero { height: 280px; }
   .cats { grid-template-columns: repeat(3, 1fr); }
   .detail, .cart-layout { grid-template-columns: 1fr; gap: 24px; }
