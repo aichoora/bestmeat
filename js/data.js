@@ -1,11 +1,11 @@
 // 상품 데이터 (시안용 샘플). 나중에 서버/DB로 교체합니다.
 const CATEGORIES = [
-  { id: "beef", name: "소고기", icon: "🐂" },
-  { id: "pork", name: "돼지고기", icon: "🐖" },
-  { id: "chicken", name: "닭·오리", icon: "🐓" },
-  { id: "lamb", name: "양고기", icon: "🐑" },
-  { id: "gift", name: "선물세트", icon: "🎁" },
-  { id: "ready", name: "간편식", icon: "🍱" },
+  { id: "beef", name: "소고기" },
+  { id: "pork", name: "돼지고기" },
+  { id: "chicken", name: "닭·오리" },
+  { id: "lamb", name: "양고기" },
+  { id: "gift", name: "선물세트" },
+  { id: "ready", name: "간편식" },
 ];
 
 const PRODUCTS = [

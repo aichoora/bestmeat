@@ -18,10 +18,10 @@
 
     <div class="my-layout">
       <nav class="my-menu" id="menu">
-        <a href="#orders">📦 주문 내역</a>
-        <a href="#profile">👤 회원정보 수정</a>
-        <a href="#password">🔒 비밀번호 변경</a>
-        <a href="#withdraw">🚪 회원 탈퇴</a>
+        <a href="#orders"><i data-icon="box"></i> 주문 내역</a>
+        <a href="#profile"><i data-icon="user"></i> 회원정보 수정</a>
+        <a href="#password"><i data-icon="lock"></i> 비밀번호 변경</a>
+        <a href="#withdraw"><i data-icon="logout"></i> 회원 탈퇴</a>
       </nav>
 
       <div>
@@ -126,7 +126,7 @@
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
       if (!list.length) {
-        $("orders").innerHTML = `<div class="empty"><p style="font-size:48px">📦</p><p>주문 내역이 없어요.</p><br><a href="products.html" class="btn btn-red">쇼핑하러 가기</a></div>`;
+        $("orders").innerHTML = `<div class="empty"><img src="images/icons/box-empty.svg" alt="" class="empty-ico"><p>주문 내역이 없어요.</p><br><a href="products.html" class="btn btn-red">쇼핑하러 가기</a></div>`;
         return;
       }
 

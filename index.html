@@ -49,26 +49,26 @@
     <nav class="cats" id="cats"></nav>
 
     <section class="section">
-      <div class="section-head"><h2>🔥 이번 주 베스트</h2><a href="products.html?sort=reviews">더보기 ›</a></div>
+      <div class="section-head"><h2><img src="images/icons/fire.svg" alt="" class="h-ico">이번 주 베스트</h2><a href="products.html?sort=reviews">더보기 ›</a></div>
       <div class="grid" id="best"></div>
     </section>
 
     <section class="section">
-      <div class="section-head"><h2>💸 오늘의 특가</h2><a href="products.html?sort=discount">더보기 ›</a></div>
+      <div class="section-head"><h2><img src="images/icons/sale.svg" alt="" class="h-ico">오늘의 특가</h2><a href="products.html?sort=discount">더보기 ›</a></div>
       <div class="grid" id="deal"></div>
     </section>
 
     <section class="section">
-      <div class="section-head"><h2>🎁 선물세트</h2><a href="products.html?cat=gift">더보기 ›</a></div>
+      <div class="section-head"><h2><img src="images/categories/gift.svg" alt="" class="h-ico">선물세트</h2><a href="products.html?cat=gift">더보기 ›</a></div>
       <div class="grid" id="gift"></div>
     </section>
   </main>
 
   <section class="promise">
     <div class="wrap">
-      <div><span class="ico">❄️</span><b>콜드체인 배송</b><p>0~4℃를 유지한 채 문 앞까지</p></div>
-      <div><span class="ico">🔪</span><b>주문 후 손질</b><p>주문이 들어오면 그날 바로 손질</p></div>
-      <div><span class="ico">✅</span><b>이력 추적</b><p>모든 상품의 원산지와 등급 공개</p></div>
+      <div><img src="images/icons/cold.svg" alt="" class="ico"><b>콜드체인 배송</b><p>0~4℃를 유지한 채 문 앞까지</p></div>
+      <div><img src="images/icons/knife.svg" alt="" class="ico"><b>주문 후 손질</b><p>주문이 들어오면 그날 바로 손질</p></div>
+      <div><img src="images/icons/trace.svg" alt="" class="ico"><b>이력 추적</b><p>모든 상품의 원산지와 등급 공개</p></div>
     </div>
   </section>
 
@@ -121,7 +121,7 @@
   </script>
   <script>
     document.getElementById("cats").innerHTML = CATEGORIES
-      .map((c) => `<a href="products.html?cat=${c.id}"><span>${c.icon}</span>${c.name}</a>`).join("");
+      .map((c) => `<a href="products.html?cat=${c.id}"><img src="images/categories/${c.id}.svg" alt="">${c.name}</a>`).join("");
 
     const render = (id, list) => document.getElementById(id).innerHTML = list.slice(0, 4).map(productCard).join("");
     render("best", [...PRODUCTS].sort((a, b) => b.reviews - a.reviews));

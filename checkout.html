@@ -70,10 +70,10 @@
         <section class="box">
           <h2>결제 수단</h2>
           <div class="chips pay" id="methods">
-            <label><input type="radio" name="pay" value="card" checked><span>💳 신용카드</span></label>
-            <label><input type="radio" name="pay" value="transfer"><span>🏦 계좌이체</span></label>
-            <label><input type="radio" name="pay" value="deposit"><span>🧾 무통장입금</span></label>
-            <label><input type="radio" name="pay" value="phone"><span>📱 휴대폰</span></label>
+            <label><input type="radio" name="pay" value="card" checked><span><i data-icon="card"></i> 신용카드</span></label>
+            <label><input type="radio" name="pay" value="transfer"><span><i data-icon="bank"></i> 계좌이체</span></label>
+            <label><input type="radio" name="pay" value="deposit"><span><i data-icon="receipt"></i> 무통장입금</span></label>
+            <label><input type="radio" name="pay" value="phone"><span><i data-icon="phone"></i> 휴대폰</span></label>
           </div>
           <div class="pay-detail" data-for="card">
             <div class="cols">
@@ -207,7 +207,7 @@
     const couponAmount = firstOrder ? Math.min(Math.floor((cart.subtotal * FIRST_COUPON.rate) / 10) * 10, FIRST_COUPON.max) : 0;
     $("coupon").innerHTML = firstOrder
       ? `<label class="coupon"><input type="checkbox" id="use-coupon" checked>
-           <span><b>🎉 첫 구매 10% 할인</b><small>최대 ${won(FIRST_COUPON.max)} · 회원가입 축하 쿠폰</small></span>
+           <span><b>${icon("ticket")} 첫 구매 10% 할인</b><small>최대 ${won(FIRST_COUPON.max)} · 회원가입 축하 쿠폰</small></span>
            <strong>-${won(couponAmount)}</strong></label>`
       : `<p class="msg">사용 가능한 쿠폰이 없습니다.</p>`;
     $("use-coupon")?.addEventListener("change", updateTotal);

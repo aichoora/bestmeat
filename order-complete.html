@@ -38,7 +38,7 @@
       main.innerHTML = `
         <ol class="steps"><li>장바구니</li><li>주문서 작성</li><li class="on">주문 완료</li></ol>
         <div class="done">
-          <div class="done-icon">${{ 입금대기: "🧾", 주문취소: "↩️" }[o.status] || "✅"}</div>
+          <img class="done-icon" alt="" src="images/icons/${{ 입금대기: "receipt", 주문취소: "cancel" }[o.status] || "done"}.svg">
           <h1>${{ 입금대기: "주문이 접수되었습니다", 주문취소: "취소된 주문입니다" }[o.status] || "주문이 완료되었습니다"}</h1>
           <p>${o.status === "주문취소" ? "결제 금액은 3~5영업일 안에 환불됩니다." : `<b>${dateText}</b>에 신선하게 도착할 예정이에요.`}</p>
           <p class="order-no">주문번호 ${o.id}</p>

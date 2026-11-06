@@ -255,7 +255,7 @@ function toast(msg) {
 function addToCart(id, qty = 1) {
   if (findProduct(id)?.soldOut) { toast("품절된 상품입니다."); return false; }
   Cart.add(id, qty);
-  toast("장바구니에 담았습니다 🛒");
+  toast("장바구니에 담았습니다");
   return true;
 }
 
@@ -274,7 +274,7 @@ function productCard(p) {
   return `<article class="card">
     <div class="thumb-wrap">
       <a href="product.html?id=${p.id}">${thumb(p)}</a>
-      ${p.soldOut ? "" : `<button class="btn-cart" onclick="addToCart(${p.id})" aria-label="장바구니 담기">🛒 담기</button>`}
+      ${p.soldOut ? "" : `<button class="btn-cart" onclick="addToCart(${p.id})" aria-label="장바구니 담기">${icon("cart")} 담기</button>`}
     </div>
     <div class="card-body">
       <p class="origin">${p.origin}${p.grade !== "-" ? " · " + p.grade : ""}</p>
@@ -284,6 +284,36 @@ function productCard(p) {
     </div>
   </article>`;
 }
+
+// ---------- 아이콘 ----------
+// 글자 옆에 쓰는 선 아이콘. 글자색을 따라간다. 사용: icon("cart")
+const ICONS = {
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20.5 20.5 16 16"/>',
+  cart: '<path d="M2.5 4h2.4l2.4 11.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 1.9-1.5L20.5 8H6.1"/><circle cx="10" cy="20.5" r="1.3"/><circle cx="17" cy="20.5" r="1.3"/>',
+  sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  chart: '<path d="M3.5 3.5v17h17"/><path d="M8 16v-4M12.5 16V8M17 16v-6"/>',
+  box: '<path d="M20.5 7.5 12 3 3.5 7.5 12 12z"/><path d="M3.5 7.5v9L12 21l8.5-4.5v-9M12 12v9"/>',
+  tag: '<path d="M3 12V4.5A1.5 1.5 0 0 1 4.5 3H12l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.4"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.4 3.5 5.2"/>',
+  home: '<path d="M3 11 12 3l9 8"/><path d="M5 9.5V20h5v-6h4v6h5V9.5"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.2-7 8-7s7 2.5 8 7"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  logout: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M9 8l-4 4 4 4M5 12h10"/>',
+  card: '<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6 15h4"/>',
+  bank: '<path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18"/>',
+  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  ticket: '<path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/><path d="M15 7v2M15 11v2M15 15v2"/>',
+};
+function icon(name) {
+  return `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+}
+// HTML에 직접 쓴 <i data-icon="이름"></i> 자리를 아이콘으로 채운다
+function fillIcons(root = document) {
+  root.querySelectorAll("[data-icon]").forEach((el) => { el.outerHTML = icon(el.dataset.icon); });
+}
+fillIcons();
 
 // ---------- 헤더 / 푸터 ----------
 // 로고: 뼈다귀 고기 아이콘 + 둥근 한글 이름
@@ -300,13 +330,13 @@ function renderLayout() {
         <a href="index.html" class="logo" aria-label="베스트미트 홈">${logoHtml()}</a>
         <form class="search" action="products.html">
           <input name="q" placeholder="오늘은 어떤 고기가 필요하세요?" value="${escapeHtml(param("q") || "")}">
-          <button aria-label="검색">🔍</button>
+          <button aria-label="검색">${icon("search")}</button>
         </form>
         <nav class="util">
           ${Auth.current()
-            ? `${Auth.isAdmin() ? `<a href="admin.html" class="admin-link">⚙️ 관리자</a>` : ""}<a href="mypage.html"><b>${escapeHtml(Auth.current().name)}</b>님 · 마이페이지</a><a href="#" onclick="Auth.logout(); return false;">로그아웃</a>`
+            ? `${Auth.isAdmin() ? `<a href="admin.html" class="admin-link">${icon("sliders")} 관리자</a>` : ""}<a href="mypage.html"><b>${escapeHtml(Auth.current().name)}</b>님 · 마이페이지</a><a href="#" onclick="Auth.logout(); return false;">로그아웃</a>`
             : `<a href="login.html">로그인</a><a href="signup.html">회원가입</a>`}
-          <a href="cart.html" class="cart-link">🛒 장바구니 <i id="cart-count" hidden>0</i></a>
+          <a href="cart.html" class="cart-link">${icon("cart")} 장바구니 <i id="cart-count" hidden>0</i></a>
         </nav>
       </div>
       <nav class="gnb">
