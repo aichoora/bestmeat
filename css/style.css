@@ -333,7 +333,8 @@ button { font: inherit; cursor: pointer; border: 0; }
 .bar i { display: block; height: 100%; background: var(--red); border-radius: 3px; }
 .muted-text { color: #999; font-size: 14px; }
 .empty.small { padding: 32px 0; font-size: 14px; }
-.overlay > .modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; display: flex; flex-direction: column; text-align: left; overflow: hidden; }
+.overlay > .modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; display: flex; flex-direction: column; text-align: left; overflow: hidden; background: #fff; border-radius: var(--radius); box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+#product-layer { background: rgba(0,0,0,.6); }
 .modal-body { padding: 20px 22px 8px; overflow-y: auto; }
 .modal-body .field input, .modal-body .field select, .modal-body textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font: inherit; background: #fff; outline: none; }
 .modal-body .field input:focus, .modal-body textarea:focus { border-color: var(--red); }
