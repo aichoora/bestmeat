@@ -163,3 +163,31 @@ const PHOTO_CREDITS = [
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
   }
 ];
+
+// 메인 배너 사진 출처
+const BANNER_CREDITS = [
+  {
+    "name": "메인 배너 1 (한우)",
+    "title": "Marbled beef cooking on a Korean barbecue tabletop grill.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Marbled_beef_cooking_on_a_Korean_barbecue_tabletop_grill.jpg",
+    "artist": "Oleg Yunakov",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  {
+    "name": "메인 배너 2 (한돈 구이)",
+    "title": "Korean BBQ (30252991226).jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Korean_BBQ_(30252991226).jpg",
+    "artist": "pelican from Tokyo, Japan",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+  },
+  {
+    "name": "메인 배너 3 (홈파티)",
+    "title": "Mixed meat platter at Bella Vista Restaurant in Mostar, Bosnia and Herzegovina (2025).jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Mixed_meat_platter_at_Bella_Vista_Restaurant_in_Mostar,_Bosnia_and_Herzegovina_(2025).jpg",
+    "artist": "Minja Klarić",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  }
+];

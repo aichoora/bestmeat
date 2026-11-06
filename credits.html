@@ -11,11 +11,18 @@
 
   <main class="wrap" style="max-width:900px">
     <h1 class="page-title">사진 출처</h1>
-    <p class="muted-text" style="margin-bottom:20px">상품 사진은 위키미디어 공용(Wikimedia Commons)의 자유 이용 사진을 정사각형으로 잘라 사용했습니다.</p>
+    <p class="muted-text" style="margin-bottom:20px">상품 사진과 메인 배너 사진은 위키미디어 공용(Wikimedia Commons)의 자유 이용 사진을 정사각형으로 잘라 사용했습니다.</p>
     <div class="box table-wrap">
       <table class="table">
         <thead><tr><th>상품</th><th>원본 사진</th><th>작성자</th><th>라이선스</th></tr></thead>
         <tbody id="list"></tbody>
+      </table>
+    </div>
+    <h2 style="font-size:18px;margin:32px 0 12px">메인 배너</h2>
+    <div class="box table-wrap">
+      <table class="table">
+        <thead><tr><th>위치</th><th>원본 사진</th><th>작성자</th><th>라이선스</th></tr></thead>
+        <tbody id="banner-list"></tbody>
       </table>
     </div>
   </main>
@@ -28,13 +35,17 @@
   <script>
     const e = escapeHtml;
     const safeUrl = (u) => (/^https:\/\//.test(u) ? e(u) : "#");
-    document.getElementById("list").innerHTML = PHOTO_CREDITS.map((c) => `
+    const row = (first, c) => `
       <tr>
-        <td><a href="product.html?id=${c.id}" class="link">${e(c.name)}</a></td>
+        <td>${first}</td>
         <td><a href="${safeUrl(c.page)}" target="_blank" rel="noopener" class="link">${e(c.title)}</a></td>
         <td>${e(c.artist || "-")}</td>
         <td>${c.licenseUrl ? `<a href="${safeUrl(c.licenseUrl)}" target="_blank" rel="noopener" class="link">${e(c.license)}</a>` : e(c.license)}</td>
-      </tr>`).join("");
+      </tr>`;
+    document.getElementById("list").innerHTML = PHOTO_CREDITS
+      .map((c) => row(`<a href="product.html?id=${c.id}" class="link">${e(c.name)}</a>`, c)).join("");
+    document.getElementById("banner-list").innerHTML = BANNER_CREDITS
+      .map((c) => row(`<a href="index.html" class="link">${e(c.name)}</a>`, c)).join("");
   </script>
 </body>
 </html>

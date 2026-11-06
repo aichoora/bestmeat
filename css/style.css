@@ -34,11 +34,22 @@ button { font: inherit; cursor: pointer; border: 0; }
 .gnb a:hover, .gnb a.on { color: var(--red); border-color: var(--red); }
 
 /* ---------- 메인 배너 ---------- */
-.hero { background: linear-gradient(120deg, var(--red-dark), var(--red)); color: #fff; }
-.hero .wrap { display: flex; align-items: center; justify-content: space-between; padding-top: 56px; padding-bottom: 56px; gap: 24px; }
-.hero h1 { font-size: 40px; line-height: 1.25; font-weight: 900; }
-.hero p { margin: 14px 0 24px; opacity: .9; }
-.hero .art { font-size: 140px; line-height: 1; filter: drop-shadow(0 10px 20px rgba(0,0,0,.25)); }
+.hero { position: relative; height: 420px; overflow: hidden; background: var(--red-dark); color: #fff; }
+.hero-track { display: flex; height: 100%; transition: transform .6s ease; }
+.hero-slide { position: relative; flex: 0 0 100%; height: 100%; }
+.hero-slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hero-slide::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.45) 45%, rgba(0,0,0,0) 80%); }
+.hero-slide .wrap { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+.hero .tag { display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--red); font-size: 13px; font-weight: 700; margin-bottom: 14px; }
+.hero h1, .hero h2 { font-size: 40px; line-height: 1.25; font-weight: 900; text-shadow: 0 2px 12px rgba(0,0,0,.3); }
+.hero p { margin: 14px 0 24px; opacity: .92; }
+.hero-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255,255,255,.18); color: #fff; font-size: 24px; cursor: pointer; }
+.hero-arrow:hover { background: rgba(255,255,255,.35); }
+.hero-arrow.prev { left: 16px; } .hero-arrow.next { right: 16px; }
+.hero-dots { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 2; display: flex; gap: 8px; }
+.hero-dots button { width: 10px; height: 10px; padding: 0; border: 0; border-radius: 999px; background: rgba(255,255,255,.5); cursor: pointer; transition: width .3s; }
+.hero-dots button.on { width: 28px; background: #fff; }
+@media (prefers-reduced-motion: reduce) { .hero-track { transition: none; } }
 .btn { display: inline-block; padding: 12px 28px; border-radius: 999px; font-weight: 700; }
 .btn-white { background: #fff; color: var(--red); }
 .btn-red { background: var(--red); color: #fff; }
@@ -379,8 +390,10 @@ footer .logo { color: #fff; margin-bottom: 6px; }
   .my-summary { grid-template-columns: 1fr 1fr 1fr; }
   .my-summary > .hello { grid-column: 1 / -1; border-bottom: 1px solid #eadfd9; }
   .my-summary > *:nth-child(2) { border-left: 0; }
-  .hero h1 { font-size: 28px; }
-  .hero .art { font-size: 80px; }
+  .hero { height: 340px; }
+  .hero h1, .hero h2 { font-size: 28px; }
+  .hero-slide::after { background: linear-gradient(90deg, rgba(0,0,0,.75), rgba(0,0,0,.35)); }
+  .hero-arrow { display: none; }
 }
 @media (max-width: 600px) {
   .header-inner { flex-wrap: wrap; gap: 12px; }

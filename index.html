@@ -9,15 +9,39 @@
 <body>
   <header id="header"></header>
 
-  <section class="hero">
-    <div class="wrap">
-      <div>
-        <h1>산지에서 식탁까지,<br>가장 신선한 고기</h1>
-        <p>오늘 손질한 고기를 콜드체인으로 내일 아침 받아보세요.</p>
-        <a href="products.html" class="btn btn-white">지금 쇼핑하기</a>
+  <section class="hero" aria-roledescription="carousel" aria-label="메인 배너">
+    <div class="hero-track" id="hero-track">
+      <div class="hero-slide">
+        <img src="images/banners/1.jpg" alt="불판 위에서 익어가는 마블링 좋은 소고기">
+        <div class="wrap">
+          <span class="tag">PREMIUM 한우</span>
+          <h1>산지에서 식탁까지,<br>가장 신선한 고기</h1>
+          <p>오늘 손질한 고기를 콜드체인으로 내일 아침 받아보세요.</p>
+          <a href="products.html?cat=beef" class="btn btn-white">한우 보러가기</a>
+        </div>
       </div>
-      <div class="art">🥩</div>
+      <div class="hero-slide">
+        <img src="images/banners/2.jpg" alt="고기와 버섯, 대파를 굽고 있는 한국식 고기 불판" loading="lazy">
+        <div class="wrap">
+          <span class="tag">이번 주 특가</span>
+          <h2>집에서 즐기는<br>한돈 구이 파티</h2>
+          <p>삼겹살·목살·이베리코까지 최대 20% 할인</p>
+          <a href="products.html?cat=pork" class="btn btn-white">돼지고기 보러가기</a>
+        </div>
+      </div>
+      <div class="hero-slide">
+        <img src="images/banners/3.jpg" alt="구운 고기와 감자튀김, 채소를 담은 모둠 고기 플래터" loading="lazy">
+        <div class="wrap">
+          <span class="tag">홈파티 · 캠핑</span>
+          <h2>주말 고기 준비,<br>한 번에 끝내세요</h2>
+          <p>선물세트부터 간편식까지, 오늘 주문하면 내일 도착</p>
+          <a href="products.html?sort=discount" class="btn btn-white">특가 상품 보기</a>
+        </div>
+      </div>
     </div>
+    <button class="hero-arrow prev" id="hero-prev" aria-label="이전 배너">‹</button>
+    <button class="hero-arrow next" id="hero-next" aria-label="다음 배너">›</button>
+    <div class="hero-dots" id="hero-dots"></div>
   </section>
 
   <main class="wrap">
@@ -51,6 +75,49 @@
 
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    // 메인 배너: 5초마다 자동으로 넘어가고, 마우스를 올리면 멈춤. 화살표·점·스와이프로 넘길 수 있음.
+    (function () {
+      const hero = document.querySelector(".hero");
+      const track = document.getElementById("hero-track");
+      const slides = track.children;
+      const dots = document.getElementById("hero-dots");
+      let cur = 0, timer = null;
+
+      dots.innerHTML = [...slides].map((_, i) => `<button aria-label="${i + 1}번 배너"></button>`).join("");
+      const go = (n) => {
+        cur = (n + slides.length) % slides.length;
+        track.style.transform = `translateX(-${cur * 100}%)`;
+        [...dots.children].forEach((d, i) => d.classList.toggle("on", i === cur));
+        [...slides].forEach((s, i) => s.setAttribute("aria-hidden", i !== cur));
+        // 보이지 않는 배너의 버튼은 Tab으로 가지 않게
+        [...slides].forEach((s, i) => s.querySelectorAll("a").forEach((a) => (a.tabIndex = i === cur ? 0 : -1)));
+      };
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const start = () => { if (!reduce) { stop(); timer = setInterval(() => go(cur + 1), 5000); } };
+      const stop = () => clearInterval(timer);
+
+      document.getElementById("hero-prev").onclick = () => { go(cur - 1); start(); };
+      document.getElementById("hero-next").onclick = () => { go(cur + 1); start(); };
+      [...dots.children].forEach((d, i) => (d.onclick = () => { go(i); start(); }));
+      hero.addEventListener("mouseenter", stop);
+      hero.addEventListener("mouseleave", start);
+      hero.addEventListener("focusin", stop);
+      hero.addEventListener("focusout", start);
+      document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
+
+      let x0 = null;
+      hero.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; stop(); }, { passive: true });
+      hero.addEventListener("touchend", (e) => {
+        if (x0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1));
+        x0 = null; start();
+      });
+
+      go(0); start();
+    })();
+  </script>
   <script>
     document.getElementById("cats").innerHTML = CATEGORIES
       .map((c) => `<a href="products.html?cat=${c.id}"><span>${c.icon}</span>${c.name}</a>`).join("");

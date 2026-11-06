@@ -24,3 +24,13 @@ CC BY / CC BY-SA 사진은 사이트에 출처를 표시해야 합니다 (푸터
 | 한우 사골곰탕 | 16.jpg | [Seolleongtang.jpg](https://commons.wikimedia.org/wiki/File:Seolleongtang.jpg) | 이동원 | [CC0](http://creativecommons.org/publicdomain/zero/1.0/deed.en) |
 | 양념 소불고기 | 17.jpg | [Korean.cuisine-Bulgogi-01.jpg](https://commons.wikimedia.org/wiki/File:Korean.cuisine-Bulgogi-01.jpg) | by ayustety | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0) |
 | 수제 함박스테이크 | 18.jpg | [Hamburg-Steak.jpg](https://commons.wikimedia.org/wiki/File:Hamburg-Steak.jpg) | MaedaAkihiko | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) |
+
+## 메인 배너 사진
+
+1600x600으로 잘라 사용했습니다.
+
+| 위치 | 파일 | 원본 | 작성자 | 라이선스 |
+|---|---|---|---|---|
+| 메인 배너 1 (한우) | banners/1.jpg | [Marbled beef cooking on a Korean barbecue tabletop grill.jpg](https://commons.wikimedia.org/wiki/File:Marbled_beef_cooking_on_a_Korean_barbecue_tabletop_grill.jpg) | Oleg Yunakov | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) |
+| 메인 배너 2 (한돈 구이) | banners/2.jpg | [Korean BBQ (30252991226).jpg](https://commons.wikimedia.org/wiki/File:Korean_BBQ_(30252991226).jpg) | pelican from Tokyo, Japan | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0) |
+| 메인 배너 3 (홈파티) | banners/3.jpg | [Mixed meat platter at Bella Vista Restaurant in Mostar, Bosnia and Herzegovina (2025).jpg](https://commons.wikimedia.org/wiki/File:Mixed_meat_platter_at_Bella_Vista_Restaurant_in_Mostar,_Bosnia_and_Herzegovina_(2025).jpg) | Minja Klarić | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) |
