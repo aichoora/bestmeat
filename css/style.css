@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Jua&family=Fredoka:wght@500&display=swap");
 
 :root {
   --red: #c62828;
@@ -20,9 +20,18 @@ button { font: inherit; cursor: pointer; border: 0; }
 .topbar { background: var(--ink); color: #ddd; font-size: 13px; text-align: center; padding: 6px 16px; }
 .topbar b { color: #ffb4a8; }
 .header-inner { max-width: 1200px; margin: 0 auto; padding: 18px 16px; display: flex; align-items: center; gap: 24px; }
-.logo { font-size: 28px; font-weight: 900; letter-spacing: -1px; color: var(--ink); }
-.logo span { color: var(--red); }
-.logo.small { font-size: 22px; }
+.logo { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); flex-shrink: 0; }
+.logo-icon { width: 44px; height: 40px; }
+.logo-text { display: flex; flex-direction: column; }
+.logo-name { font-family: "Jua", "Noto Sans KR", sans-serif; font-size: 30px; line-height: 1; font-weight: 400; }
+.logo-name em { font-style: normal; color: var(--red); }
+.logo-sub { font-family: "Fredoka", sans-serif; font-size: 11px; letter-spacing: 3px; color: #b07a6e; margin-top: 3px; }
+.logo.small .logo-icon { width: 36px; height: 33px; }
+.logo.small .logo-name { font-size: 24px; }
+.logo.small .logo-sub { font-size: 10px; letter-spacing: 2.5px; }
+.logo.dark { color: #fff; }
+.logo.dark .logo-name em { color: #ff8a80; }
+.logo.dark .logo-sub { color: #c9a49b; }
 .search { flex: 1; display: flex; border: 2px solid var(--red); border-radius: 999px; overflow: hidden; max-width: 520px; }
 .search input { flex: 1; border: 0; padding: 10px 18px; font: inherit; outline: none; min-width: 0; }
 .search button { background: none; padding: 0 16px; font-size: 18px; }
@@ -39,7 +48,7 @@ button { font: inherit; cursor: pointer; border: 0; }
 .hero-slide { position: relative; flex: 0 0 100%; height: 100%; }
 .hero-slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .hero-slide::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.45) 45%, rgba(0,0,0,0) 80%); }
-.hero-slide .wrap { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+.hero-slide .wrap { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding-left: 72px; padding-right: 72px; }
 .hero .tag { display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--red); font-size: 13px; font-weight: 700; margin-bottom: 14px; }
 .hero h1, .hero h2 { font-size: 40px; line-height: 1.25; font-weight: 900; text-shadow: 0 2px 12px rgba(0,0,0,.3); }
 .hero p { margin: 14px 0 24px; opacity: .92; }
@@ -288,7 +297,7 @@ button { font: inherit; cursor: pointer; border: 0; }
 .admin { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
 .admin-side { background: #1b1b1b; color: #ccc; padding: 24px 0; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
 .admin-side .logo { color: #fff; padding: 0 22px 24px; }
-.admin-side .logo small { font-size: 12px; color: #999; font-weight: 400; letter-spacing: 0; }
+.admin-side .logo .logo-sub { letter-spacing: 1px; }
 .admin-side nav a, .side-bottom a { display: flex; align-items: center; gap: 6px; padding: 12px 22px; font-size: 15px; }
 .admin-side nav a:hover, .side-bottom a:hover { background: #2a2a2a; color: #fff; }
 .admin-side nav a.on { background: var(--red); color: #fff; font-weight: 700; }
@@ -373,7 +382,7 @@ button { font: inherit; cursor: pointer; border: 0; }
 /* ---------- 푸터 / 토스트 ---------- */
 footer { background: #1b1b1b; color: #999; font-size: 13px; margin-top: 64px; }
 .footer-inner { max-width: 1200px; margin: 0 auto; padding: 36px 16px; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-footer .logo { color: #fff; margin-bottom: 6px; }
+footer .logo { margin-bottom: 10px; }
 .footer-info p { margin-bottom: 4px; }
 .copy { color: #666; }
 .toast { position: fixed; left: 50%; bottom: 32px; transform: translate(-50%, 20px); background: rgba(30,30,30,.92); color: #fff; padding: 12px 24px; border-radius: 999px; opacity: 0; transition: .25s; pointer-events: none; z-index: 99; }
@@ -394,6 +403,7 @@ footer .logo { color: #fff; margin-bottom: 6px; }
   .hero h1, .hero h2 { font-size: 28px; }
   .hero-slide::after { background: linear-gradient(90deg, rgba(0,0,0,.75), rgba(0,0,0,.35)); }
   .hero-arrow { display: none; }
+  .hero-slide .wrap { padding-left: 16px; padding-right: 16px; }
 }
 @media (max-width: 600px) {
   .header-inner { flex-wrap: wrap; gap: 12px; }

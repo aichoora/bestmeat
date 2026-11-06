@@ -286,13 +286,18 @@ function productCard(p) {
 }
 
 // ---------- 헤더 / 푸터 ----------
+// 로고: 뼈다귀 고기 아이콘 + 둥근 한글 이름
+function logoHtml(sub = "BESTMEAT") {
+  return `<img src="images/logo-icon.svg" alt="" class="logo-icon"><span class="logo-text"><span class="logo-name">베스트<em>미트</em></span><span class="logo-sub">${sub}</span></span>`;
+}
+
 function renderLayout() {
   const header = document.getElementById("header");
   if (header) {
     header.innerHTML = `
       <div class="topbar">오후 3시 전 주문 시 <b>오늘 출발</b> · 5만원 이상 <b>무료배송</b></div>
       <div class="header-inner">
-        <a href="index.html" class="logo">BEST<span>MEAT</span></a>
+        <a href="index.html" class="logo" aria-label="베스트미트 홈">${logoHtml()}</a>
         <form class="search" action="products.html">
           <input name="q" placeholder="오늘은 어떤 고기가 필요하세요?" value="${escapeHtml(param("q") || "")}">
           <button aria-label="검색">🔍</button>
@@ -314,7 +319,7 @@ function renderLayout() {
     footer.innerHTML = `
       <div class="footer-inner">
         <div>
-          <p class="logo small">BEST<span>MEAT</span></p>
+          <p class="logo small dark">${logoHtml()}</p>
           <p>믿을 수 있는 고기를 산지에서 식탁까지.</p>
         </div>
         <div class="footer-info">
