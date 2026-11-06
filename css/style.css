@@ -208,6 +208,20 @@ button { font: inherit; cursor: pointer; border: 0; }
 .chips input:checked + span { border-color: var(--red); color: var(--red); font-weight: 700; background: #fff5f5; }
 .chips input:focus-visible + span { outline: 2px solid var(--red); outline-offset: 2px; }
 .chips.pay { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 16px; }
+/* 상품 옵션 */
+.opt-select { margin: 18px 0 14px; }
+.opt-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.chips.opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.chips.opts span { text-align: center; padding: 10px 8px; }
+.chips.opts small { display: block; color: var(--gray); font-size: 12px; font-weight: 400; margin-top: 2px; }
+.chips.opts input:checked + span small { color: var(--red); }
+.opt-chip { font-style: normal; font-size: 11px; font-weight: 500; color: var(--gray); border: 1px solid #ddd; border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: 2px; }
+.opt-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr auto; gap: 6px; margin-bottom: 6px; }
+.modal-body .opt-row input { padding: 8px 10px; }
+.opt-head { font-size: 12px; color: var(--gray); margin-bottom: 4px; }
+.opt-head span:last-child { width: 52px; }
+.opt-field:has(#opt-rows:empty) .opt-head { display: none; }
+.opt-field > label small { font-weight: 400; margin-left: 4px; }
 .chips.pay span { text-align: center; padding: 14px 8px; }
 .coupon { display: flex; align-items: center; gap: 12px; border: 1px dashed var(--red); background: #fff7f7; border-radius: 10px; padding: 14px 16px; cursor: pointer; }
 .coupon input { width: 18px; height: 18px; accent-color: var(--red); }

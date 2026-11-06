@@ -113,13 +113,20 @@
           <div class="field"><label for="f-grade">등급</label><input id="f-grade" placeholder="1++ (없으면 비워두세요)"></div>
         </div>
         <div class="cols">
-          <div class="field"><label for="f-weight">중량 <i>*</i></label><input id="f-weight" placeholder="500g"><p class="msg"></p></div>
+          <div class="field"><label for="f-weight">중량 (기본 옵션) <i>*</i></label><input id="f-weight" placeholder="500g"><p class="msg"></p></div>
           <div class="field"><label>사진 없을 때 (이모지 · 배경색)</label>
             <div class="inline"><input id="f-emoji" maxlength="4" style="width:70px;text-align:center"><input id="f-tone" type="color" class="color"></div></div>
         </div>
         <div class="cols">
           <div class="field"><label for="f-price">정가 (원) <i>*</i></label><input id="f-price" type="number" min="0" step="100"><p class="msg"></p></div>
           <div class="field"><label for="f-sale">판매가 (원) <i>*</i></label><input id="f-sale" type="number" min="0" step="100"><p class="msg"></p></div>
+        </div>
+        <div class="field opt-field">
+          <label>추가 옵션 <small class="muted-text">위의 중량·정가·판매가가 첫 번째(기본) 옵션입니다</small></label>
+          <div class="opt-row opt-head" aria-hidden="true"><span>중량</span><span>정가 (원)</span><span>판매가 (원)</span><span></span></div>
+          <div id="opt-rows"></div>
+          <button type="button" class="btn btn-line sm" id="opt-add">+ 중량 옵션 추가</button>
+          <p class="msg"></p>
         </div>
         <div class="field"><label for="f-desc">상품 설명</label><textarea id="f-desc" rows="3"></textarea></div>
         <label class="check"><input type="checkbox" id="f-soldout"> 품절 처리 (쇼핑몰에서 구매 불가)</label>
@@ -273,7 +280,7 @@
             <td><div class="prod-cell"><span class="mini-thumb" style="--tone:${p.tone}">${e(p.emoji)}${p.img ? `<img src="${p.img}" alt="" loading="lazy">` : ""}</span>
               <div><a href="product.html?id=${p.id}" target="_blank" class="link">${e(p.name)}</a>${p.badge ? ` <em class="badge-mini">${p.badge}</em>` : ""}<small>#${p.id}</small></div></div></td>
             <td>${catName(p.cat)}</td>
-            <td>${e(p.origin)}<small>${e(p.weight)}</small></td>
+            <td>${e(p.origin)}<small>${e(p.weight)}${productOptions(p).length > 1 ? ` 외 옵션 ${productOptions(p).length - 1}개` : ""}</small></td>
             <td class="num">${won(p.price)}</td>
             <td class="num"><b>${won(p.sale)}</b><small class="red">${discount(p)}% 할인</small></td>
             <td><label class="switch"><input type="checkbox" ${p.soldOut ? "" : "checked"} onchange="toggleSoldOut(${p.id}, !this.checked)"><span></span>${p.soldOut ? "품절" : "판매중"}</label></td>
@@ -318,6 +325,8 @@
       $("f-id").value = id || "";
       FIELDS.forEach((k) => ($("f-" + k).value = k === "grade" && p.grade === "-" ? "" : p[k] ?? ""));
       $("f-soldout").checked = !!p.soldOut;
+      $("opt-rows").innerHTML = "";
+      (p.options || []).slice(1).forEach(addOptRow);
       photo = p.img || "";
       $("f-file").value = "";
       drawPhoto();
@@ -327,6 +336,41 @@
       $("f-name").focus();
     }
     function closeProduct() { $("product-layer").hidden = true; }
+
+    // ----- 추가 옵션 (중량별 가격) -----
+    function addOptRow(o = {}) {
+      const row = document.createElement("div");
+      row.className = "opt-row";
+      row.innerHTML = `<input class="o-label" placeholder="예: 1kg" maxlength="20" aria-label="옵션 중량">
+        <input class="o-price" type="number" min="0" step="100" placeholder="정가" aria-label="옵션 정가">
+        <input class="o-sale" type="number" min="0" step="100" placeholder="판매가" aria-label="옵션 판매가">
+        <button type="button" class="btn btn-line sm danger" aria-label="옵션 삭제">삭제</button>`;
+      row.querySelector(".o-label").value = o.label || "";
+      row.querySelector(".o-price").value = o.price || "";
+      row.querySelector(".o-sale").value = o.sale || "";
+      row.querySelector("button").onclick = () => row.remove();
+      $("opt-rows").appendChild(row);
+      return row;
+    }
+    $("opt-add").addEventListener("click", () => addOptRow().querySelector(".o-label").focus());
+    // 입력한 추가 옵션을 읽고 검사. 문제가 있으면 오류 문구를 돌려줌
+    function readOptions(base) {
+      const rows = [...document.querySelectorAll("#opt-rows .opt-row")];
+      const list = rows.map((r) => ({
+        label: r.querySelector(".o-label").value.trim(),
+        price: Number(r.querySelector(".o-price").value),
+        sale: Number(r.querySelector(".o-sale").value),
+      })).filter((o) => o.label || o.price || o.sale); // 완전히 빈 줄은 무시
+      const labels = [base.label];
+      for (const o of list) {
+        if (!o.label) return { err: "옵션 중량을 입력해 주세요." };
+        if (labels.includes(o.label)) return { err: `'${o.label}' 옵션이 중복됩니다.` };
+        if (!(o.price > 0) || !(o.sale > 0)) return { err: `'${o.label}' 옵션의 정가와 판매가를 입력해 주세요.` };
+        if (o.sale > o.price) return { err: `'${o.label}' 옵션의 판매가가 정가보다 큽니다.` };
+        labels.push(o.label);
+      }
+      return { options: list.length ? [base, ...list] : [] };
+    }
 
     // ----- 사진: 정사각형 600px JPEG로 줄여서 저장 (브라우저 저장 공간 절약) -----
     let photo = "";
@@ -390,10 +434,15 @@
         setField($("f-price"), price > 0 ? "" : "정가를 입력해 주세요."),
         setField($("f-sale"), !(sale > 0) ? "판매가를 입력해 주세요." : sale > price ? "판매가는 정가보다 클 수 없습니다." : ""),
       ].every(Boolean);
+      const opt = readOptions({ label: v.weight, price, sale });
+      const optField = document.querySelector("#product-form .opt-field");
+      optField.classList.toggle("invalid", !!opt.err);
+      optField.querySelector(".msg").textContent = opt.err || "";
+      if (ok && opt.err) { optField.querySelector("input")?.focus(); return; }
       if (!ok) { document.querySelector("#product-form .field.invalid input")?.focus(); return; }
 
       const id = Number($("f-id").value) || undefined;
-      const saved = Products.upsert({ ...(id ? findProduct(id) : {}), ...v, id, price, sale, img: photo, soldOut: $("f-soldout").checked });
+      const saved = Products.upsert({ ...(id ? findProduct(id) : {}), ...v, id, price, sale, img: photo, soldOut: $("f-soldout").checked, options: opt.options });
       if (!saved) { alert(SPACE_ERROR); return; }
       closeProduct();
       toast(id ? "상품을 수정했습니다." : "상품을 등록했습니다.");

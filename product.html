@@ -18,6 +18,7 @@
   <script src="js/app.js"></script>
   <script>
     const p = findProduct(param("id"));
+    const opts = p ? productOptions(p) : [];
     const main = document.getElementById("main");
 
     if (!p) {
@@ -32,24 +33,32 @@
             <p class="origin"><a href="products.html?cat=${p.cat}">${catName}</a> › ${p.origin}</p>
             <h1>${p.name}</h1>
             <p class="rating">${p.reviews ? `★ ${p.rating} <span>리뷰 ${p.reviews.toLocaleString()}개</span>` : `<span>새 상품</span>`}</p>
-            <p class="price"><b class="rate">${discount(p)}%</b> <strong>${won(p.sale)}</strong> <del>${won(p.price)}</del></p>
+            <p class="price" id="price"></p>
             <dl class="info">
               <div><dt>원산지</dt><dd>${p.origin}</dd></div>
               <div><dt>등급</dt><dd>${p.grade}</dd></div>
-              <div><dt>중량</dt><dd>${p.weight}</dd></div>
+              <div><dt>중량</dt><dd id="weight"></dd></div>
               <div><dt>배송</dt><dd>냉장 택배 · 오후 3시 전 주문 시 오늘 출발</dd></div>
             </dl>
+            ${opts.length > 1 ? `
+            <div class="opt-select">
+              <p class="opt-title">중량 선택</p>
+              <div class="chips opts" role="radiogroup" aria-label="중량 선택">
+                ${opts.map((o, i) => `<label><input type="radio" name="opt" value="${i}" ${i === 0 ? "checked" : ""} onchange="update()">
+                  <span><b>${escapeHtml(o.label)}</b><small>${won(o.sale)}</small></span></label>`).join("")}
+              </div>
+            </div>` : ""}
             <div class="qty">
               <button onclick="changeQty(-1)">−</button>
               <input id="qty" value="1" inputmode="numeric" oninput="changeQty(0)">
               <button onclick="changeQty(1)">+</button>
             </div>
-            <div class="total"><span>총 상품금액</span><strong id="total">${won(p.sale)}</strong></div>
+            <div class="total"><span>총 상품금액</span><strong id="total"></strong></div>
             <div class="actions">
               ${p.soldOut
                 ? `<button class="btn btn-line" disabled>일시 품절된 상품입니다</button>`
-                : `<button class="btn btn-line" onclick="addToCart(p.id, getQty())">장바구니</button>
-                   <button class="btn btn-red" onclick="if (addToCart(p.id, getQty())) location.href='cart.html'">바로 구매</button>`}
+                : `<button class="btn btn-line" onclick="addToCart(p.id, getQty(), cur().label)">장바구니</button>
+                   <button class="btn btn-red" onclick="if (addToCart(p.id, getQty(), cur().label)) location.href='cart.html'">바로 구매</button>`}
             </div>
           </div>
         </div>
@@ -67,6 +76,11 @@
         </section>`;
     }
 
+    // 지금 고른 옵션
+    function cur() {
+      const checked = document.querySelector("input[name=opt]:checked");
+      return opts[checked ? Number(checked.value) : 0];
+    }
     function getQty() {
       return Math.max(1, parseInt(document.getElementById("qty").value) || 1);
     }
@@ -74,8 +88,17 @@
       const input = document.getElementById("qty");
       const n = Math.max(1, getQty() + d);
       if (d !== 0) input.value = n;
-      document.getElementById("total").textContent = won(p.sale * n);
+      update();
     }
+    // 옵션이나 수량이 바뀌면 가격, 중량, 총액을 다시 표시
+    function update() {
+      const o = cur();
+      const rate = Math.round((1 - o.sale / o.price) * 100);
+      document.getElementById("price").innerHTML = `<b class="rate">${rate}%</b> <strong>${won(o.sale)}</strong> <del>${won(o.price)}</del>`;
+      document.getElementById("weight").textContent = o.label;
+      document.getElementById("total").textContent = won(o.sale * getQty());
+    }
+    if (p) update();
   </script>
 </body>
 </html>

@@ -170,7 +170,7 @@
     function reorder(id) {
       const o = Orders.find(id);
       const items = o.items.filter((i) => findProduct(i.id));
-      items.forEach((i) => Cart.add(i.id, i.qty));
+      items.forEach((i) => Cart.add(i.id, i.qty, i.opt ?? i.weight));
       if (items.length < o.items.length) alert("판매가 끝난 상품은 제외하고 담았습니다.");
       if (confirm("장바구니에 담았습니다. 장바구니로 이동할까요?")) location.href = "cart.html";
     }

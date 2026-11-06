@@ -2,6 +2,10 @@
 const won = (n) => n.toLocaleString("ko-KR") + "원";
 const discount = (p) => Math.round((1 - p.sale / p.price) * 100);
 const findProduct = (id) => PRODUCTS.find((p) => p.id === Number(id));
+// 상품 옵션 (중량별 가격). 옵션이 없으면 기본 중량 하나만 있는 것으로 봄
+const productOptions = (p) => (p.options?.length ? p.options : [{ label: p.weight, price: p.price, sale: p.sale }]);
+// 옵션 이름으로 찾기. 없어진 옵션이면 기본 옵션으로
+const findOption = (p, label) => productOptions(p).find((o) => o.label === label) || productOptions(p)[0];
 const param = (key) => new URLSearchParams(location.search).get(key);
 
 // ---------- 장바구니 (브라우저 localStorage에 저장) ----------
@@ -22,22 +26,27 @@ const Cart = {
   mergeGuest() {
     const guest = this.load(this.guestKey);
     if (!guest.length) return;
-    guest.forEach((i) => this.add(i.id, i.qty));
+    guest.forEach((i) => this.add(i.id, i.qty, i.opt));
     try { localStorage.removeItem(this.guestKey); } catch {}
   },
   clearFor(email) {
     try { localStorage.removeItem(this.keyFor(email)); } catch {}
   },
-  add(id, qty = 1) {
+  // 같은 상품이라도 옵션(중량)이 다르면 따로 담김
+  add(id, qty = 1, opt) {
+    const p = findProduct(id);
+    const label = p ? findOption(p, opt).label : opt;
+    const optOf = (i) => { const q = findProduct(i.id); return q ? findOption(q, i.opt).label : i.opt; };
     const items = this.get();
-    const found = items.find((i) => i.id === id);
-    if (found) found.qty += qty; else items.push({ id, qty });
+    const found = items.find((i) => i.id === id && optOf(i) === label);
+    if (found) { found.qty += qty; found.opt = label; } else items.push({ id, opt: label, qty });
     this.save(items);
   },
-  setQty(id, qty) {
-    this.save(this.get().map((i) => (i.id === id ? { ...i, qty: Math.max(1, qty) } : i)));
+  // 장바구니 화면에서는 몇 번째 줄인지로 수량 변경/삭제
+  setQtyAt(index, qty) {
+    this.save(this.get().map((i, n) => (n === index ? { ...i, qty: Math.max(1, qty) } : i)));
   },
-  remove(id) { this.save(this.get().filter((i) => i.id !== id)); },
+  removeAt(index) { this.save(this.get().filter((_, n) => n !== index)); },
   count() { return this.get().reduce((s, i) => s + i.qty, 0); },
 };
 
@@ -165,7 +174,13 @@ const Products = {
     if (!Array.isArray(saved)) return;
     // 사진 기능 이전에 저장된 상품은 img 항목이 없으므로 기본 사진을 채워줌
     const defaultImg = Object.fromEntries(this.defaults.map((p) => [p.id, p.img]));
-    PRODUCTS.splice(0, PRODUCTS.length, ...saved.map((p) => ("img" in p ? p : { ...p, img: defaultImg[p.id] || "" })));
+    // 옵션 기능 이전에 저장된 상품은 options 항목이 없으므로 기본 옵션을 채워줌
+    const defaultOpts = Object.fromEntries(this.defaults.map((p) => [p.id, p.options || []]));
+    PRODUCTS.splice(0, PRODUCTS.length, ...saved.map((p) => {
+      let q = "img" in p ? p : { ...p, img: defaultImg[p.id] || "" };
+      if (!("options" in q)) q = { ...q, options: defaultOpts[q.id] || [] };
+      return q;
+    }));
   },
   // 저장 성공 여부를 돌려줌 (업로드한 사진이 많으면 브라우저 저장 공간이 부족할 수 있음)
   saveAll(list) {
@@ -180,6 +195,15 @@ const Products = {
   // 관리자 입력값 정리: 태그 문자 제거, 색상/배지 형식 제한
   clean(p) {
     const text = (s) => String(s ?? "").replace(/[<>]/g, "").trim();
+    const int = (n) => Math.max(0, Math.round(Number(n) || 0));
+    // 옵션: 이름이 있고 판매가가 정가 이하인 것만, 이름 중복 없이 최대 10개
+    const seen = new Set();
+    const options = (Array.isArray(p.options) ? p.options : [])
+      .map((o) => ({ label: text(o.label).slice(0, 20), price: int(o.price), sale: int(o.sale) }))
+      .filter((o) => o.label && o.price > 0 && o.sale > 0 && o.sale <= o.price && !seen.has(o.label) && seen.add(o.label))
+      .slice(0, 10);
+    // 옵션이 2개 이상이면 첫 번째 옵션이 곧 기본 중량/가격
+    const base = options.length > 1 ? { weight: options[0].label, price: options[0].price, sale: options[0].sale } : {};
     return {
       ...p,
       name: text(p.name), origin: text(p.origin), grade: text(p.grade) || "-", weight: text(p.weight),
@@ -192,6 +216,8 @@ const Products = {
       price: Math.max(0, Math.round(Number(p.price) || 0)),
       sale: Math.max(0, Math.round(Number(p.sale) || 0)),
       soldOut: !!p.soldOut,
+      options: options.length > 1 ? options : [],
+      ...base,
     };
   },
   upsert(p) {
@@ -215,11 +241,13 @@ Products.apply();
 
 // 장바구니 금액 계산 (장바구니, 주문서에서 함께 사용). 품절 상품은 주문에서 제외.
 function cartSummary() {
-  const all = Cart.get().map((i) => ({ ...i, p: findProduct(i.id) })).filter((i) => i.p);
+  // idx: 장바구니에서 몇 번째 줄인지, o: 고른 옵션 (중량, 정가, 판매가)
+  const all = Cart.get().map((i, idx) => ({ ...i, idx, p: findProduct(i.id) })).filter((i) => i.p)
+    .map((i) => ({ ...i, o: findOption(i.p, i.opt) }));
   const items = all.filter((i) => !i.p.soldOut);
   const soldOut = all.filter((i) => i.p.soldOut);
-  const subtotal = items.reduce((s, i) => s + i.p.sale * i.qty, 0);
-  const saved = items.reduce((s, i) => s + (i.p.price - i.p.sale) * i.qty, 0);
+  const subtotal = items.reduce((s, i) => s + i.o.sale * i.qty, 0);
+  const saved = items.reduce((s, i) => s + (i.o.price - i.o.sale) * i.qty, 0);
   const ship = !items.length || subtotal >= SHIPPING.free ? 0 : SHIPPING.fee;
   return { items, soldOut, subtotal, saved, ship };
 }
@@ -252,10 +280,14 @@ function toast(msg) {
   t._timer = setTimeout(() => t.classList.remove("show"), 1800);
 }
 
-function addToCart(id, qty = 1) {
-  if (findProduct(id)?.soldOut) { toast("품절된 상품입니다."); return false; }
-  Cart.add(id, qty);
-  toast("장바구니에 담았습니다");
+// opt를 안 주면 (상품 카드의 '담기') 기본 옵션으로 담음
+function addToCart(id, qty = 1, opt) {
+  const p = findProduct(id);
+  if (!p) return false;
+  if (p.soldOut) { toast("품절된 상품입니다."); return false; }
+  const o = findOption(p, opt);
+  Cart.add(id, qty, o.label);
+  toast(productOptions(p).length > 1 ? `장바구니에 담았습니다 (${o.label})` : "장바구니에 담았습니다");
   return true;
 }
 
@@ -279,7 +311,7 @@ function productCard(p) {
     <div class="card-body">
       <p class="origin">${p.origin}${p.grade !== "-" ? " · " + p.grade : ""}</p>
       <a href="product.html?id=${p.id}" class="name">${p.name} <small>${p.weight}</small></a>
-      <p class="price"><b class="rate">${discount(p)}%</b> <strong>${won(p.sale)}</strong> <del>${won(p.price)}</del></p>
+      <p class="price"><b class="rate">${discount(p)}%</b> <strong>${won(p.sale)}</strong> <del>${won(p.price)}</del>${productOptions(p).length > 1 ? `<em class="opt-chip">옵션 ${productOptions(p).length}</em>` : ""}</p>
       ${p.reviews ? `<p class="rating">★ ${p.rating} <span>(${p.reviews.toLocaleString()})</span></p>` : `<p class="rating"><span>새 상품</span></p>`}
     </div>
   </article>`;

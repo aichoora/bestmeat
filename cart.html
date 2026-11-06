@@ -28,12 +28,12 @@
       const soldOutHtml = soldOut.length ? `
         <div class="soldout-box">
           <p><b>품절된 상품 ${soldOut.length}개</b>는 주문에서 제외됩니다.</p>
-          ${soldOut.map(({ p }) => `
+          ${soldOut.map(({ p, o, idx }) => `
             <div class="cart-item muted">
               <a href="product.html?id=${p.id}">${thumb(p)}</a>
-              <div><p class="name">${p.name} <small>${p.weight}</small></p><p class="origin">일시 품절</p></div>
+              <div><p class="name">${p.name} <small>${escapeHtml(o.label)}</small></p><p class="origin">일시 품절</p></div>
               <span></span>
-              <button class="remove" onclick="Cart.remove(${p.id}); draw()" aria-label="삭제">✕</button>
+              <button class="remove" onclick="Cart.removeAt(${idx}); draw()" aria-label="삭제">✕</button>
             </div>`).join("")}
         </div>` : "";
 
@@ -50,19 +50,20 @@
       box.innerHTML = `
         <div class="cart-layout">
           <div>
-            ${items.map(({ p, qty }) => `
+            ${items.map(({ p, o, qty, idx }) => `
               <div class="cart-item">
                 <a href="product.html?id=${p.id}">${thumb(p)}</a>
                 <div>
-                  <a href="product.html?id=${p.id}" class="name">${p.name} <small>${p.weight}</small></a>
-                  <p class="price"><strong>${won(p.sale * qty)}</strong></p>
+                  <a href="product.html?id=${p.id}" class="name">${p.name}</a>
+                  <p class="origin">${productOptions(p).length > 1 ? "옵션: " : ""}${escapeHtml(o.label)} · 개당 ${won(o.sale)}</p>
+                  <p class="price"><strong>${won(o.sale * qty)}</strong></p>
                 </div>
                 <div class="qty">
-                  <button onclick="Cart.setQty(${p.id}, ${qty - 1}); draw()">−</button>
+                  <button onclick="Cart.setQtyAt(${idx}, ${qty - 1}); draw()">−</button>
                   <input value="${qty}" readonly>
-                  <button onclick="Cart.setQty(${p.id}, ${qty + 1}); draw()">+</button>
+                  <button onclick="Cart.setQtyAt(${idx}, ${qty + 1}); draw()">+</button>
                 </div>
-                <button class="remove" onclick="Cart.remove(${p.id}); draw()" aria-label="삭제">✕</button>
+                <button class="remove" onclick="Cart.removeAt(${idx}); draw()" aria-label="삭제">✕</button>
               </div>`).join("")}
             ${soldOutHtml}
           </div>

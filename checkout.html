@@ -134,11 +134,11 @@
 
     // ----- 주문 상품 -----
     $("item-count").textContent = `${cart.items.length}종`;
-    $("items").innerHTML = cart.items.map(({ p, qty }) => `
+    $("items").innerHTML = cart.items.map(({ p, o, qty }) => `
       <div class="order-item">
         ${thumb(p)}
-        <div><p class="name">${p.name} <small>${p.weight}</small></p><p class="origin">수량 ${qty}개</p></div>
-        <strong>${won(p.sale * qty)}</strong>
+        <div><p class="name">${p.name} <small>${escapeHtml(o.label)}</small></p><p class="origin">수량 ${qty}개</p></div>
+        <strong>${won(o.sale * qty)}</strong>
       </div>`).join("");
 
     // ----- 주문자 -----
@@ -271,7 +271,7 @@
       setTimeout(() => {
         const order = Orders.create({
           email: me.email,
-          items: cart.items.map(({ p, qty }) => ({ id: p.id, name: p.name, weight: p.weight, price: p.sale, qty })),
+          items: cart.items.map(({ p, o, qty }) => ({ id: p.id, name: p.name, weight: o.label, opt: o.label, price: o.sale, qty })),
           receiver: { name: $("r-name").value.trim(), phone: $("r-phone").value.trim(), zip: $("zip").value.trim(), addr1: $("addr1").value.trim(), addr2: $("addr2").value.trim(), memo },
           deliveryDate: document.querySelector("input[name=date]:checked").value,
           payment: {
