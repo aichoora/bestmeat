@@ -372,6 +372,19 @@ const Products = {
 };
 Products.apply();
 
+// 인기(판매) 순위: 상품 데이터의 기본 판매량(reviews 값) + 이 쇼핑몰에서 실제 주문된 수량 (취소 제외)
+function salesMap() {
+  const m = {};
+  Orders.all().filter((o) => o.status !== "주문취소")
+    .forEach((o) => o.items.forEach((i) => (m[i.id] = (m[i.id] || 0) + i.qty)));
+  return m;
+}
+function byPopularity(list) {
+  const m = salesMap();
+  const score = (p) => (p.reviews || 0) + (m[p.id] || 0);
+  return [...list].sort((a, b) => score(b) - score(a));
+}
+
 // 장바구니 금액 계산 (장바구니, 주문서에서 함께 사용). 품절 상품은 주문에서 제외.
 function cartSummary() {
   // idx: 장바구니에서 몇 번째 줄인지, o: 고른 옵션 (중량, 정가, 판매가)
@@ -568,6 +581,7 @@ function logoHtml(sub = "BESTMEAT") {
 }
 
 function renderLayout() {
+  const page = location.pathname.split("/").pop() || "index.html";
   const header = document.getElementById("header");
   if (header) {
     header.innerHTML = `
@@ -586,8 +600,11 @@ function renderLayout() {
         </nav>
       </div>
       <nav class="gnb">
-        <a href="products.html">전체</a>
-        ${CATEGORIES.map((c) => `<a href="products.html?cat=${c.id}" class="${param("cat") === c.id ? "on" : ""}">${c.name}</a>`).join("")}
+        <a href="products.html" class="${page === "products.html" && !param("cat") && !param("q") ? "on" : ""}">전체</a>
+        ${CATEGORIES.map((c) => `<a href="products.html?cat=${c.id}" class="${page === "products.html" && param("cat") === c.id ? "on" : ""}">${c.name}</a>`).join("")}
+        <span class="gnb-sep" aria-hidden="true"></span>
+        <a href="ranking.html" class="${page === "ranking.html" ? "on" : ""}">랭킹</a>
+        <a href="events.html" class="gnb-event ${page === "events.html" || page === "event.html" ? "on" : ""}">기획전</a>
       </nav>`;
   }
   const footer = document.getElementById("footer");

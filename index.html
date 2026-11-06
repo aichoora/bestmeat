@@ -18,7 +18,7 @@
           <span class="tag">PREMIUM 한우</span>
           <h1>산지에서 식탁까지,<br>가장 신선한 고기</h1>
           <p>오늘 손질한 고기를 콜드체인으로 내일 아침 받아보세요.</p>
-          <a href="products.html?cat=beef" class="btn btn-white">한우 보러가기</a>
+          <a href="event.html?id=1" class="btn btn-white">한우 기획전 보기</a>
         </div>
       </div>
       <div class="hero-slide">
@@ -27,7 +27,7 @@
           <span class="tag">이번 주 특가</span>
           <h2>집에서 즐기는<br>한돈 구이 파티</h2>
           <p>삼겹살·목살·이베리코까지 최대 20% 할인</p>
-          <a href="products.html?cat=pork" class="btn btn-white">돼지고기 보러가기</a>
+          <a href="event.html?id=2" class="btn btn-white">구이 파티 기획전 보기</a>
         </div>
       </div>
       <div class="hero-slide">
@@ -36,7 +36,7 @@
           <span class="tag">홈파티 · 캠핑</span>
           <h2>주말 고기 준비,<br>한 번에 끝내세요</h2>
           <p>선물세트부터 간편식까지, 오늘 주문하면 내일 도착</p>
-          <a href="products.html?sort=discount" class="btn btn-white">특가 상품 보기</a>
+          <a href="event.html?id=3" class="btn btn-white">기획전 보기</a>
         </div>
       </div>
     </div>
@@ -49,13 +49,18 @@
     <nav class="cats" id="cats"></nav>
 
     <section class="section">
-      <div class="section-head"><h2><img src="images/icons/fire.svg" alt="" class="h-ico">이번 주 베스트</h2><a href="products.html?sort=reviews">더보기 ›</a></div>
+      <div class="section-head"><h2><img src="images/icons/fire.svg" alt="" class="h-ico">이번 주 베스트</h2><a href="ranking.html">랭킹 보기 ›</a></div>
       <div class="grid" id="best"></div>
     </section>
 
     <section class="section">
       <div class="section-head"><h2><img src="images/icons/sale.svg" alt="" class="h-ico">오늘의 특가</h2><a href="products.html?sort=discount">더보기 ›</a></div>
       <div class="grid" id="deal"></div>
+    </section>
+
+    <section class="section" id="event-section">
+      <div class="section-head"><h2><img src="images/icons/sale.svg" alt="" class="h-ico">진행 중인 기획전</h2><a href="events.html">전체 보기 ›</a></div>
+      <div class="event-grid" id="events"></div>
     </section>
 
     <section class="section">
@@ -76,6 +81,7 @@
 
   <script src="js/data.js"></script>
   <script src="js/reviews-sample.js"></script>
+  <script src="js/events.js"></script>
   <script src="js/app.js"></script>
   <script>
     // 메인 배너: 5초마다 자동으로 넘어가고, 마우스를 올리면 멈춤. 화살표·점·스와이프로 넘길 수 있음.
@@ -125,7 +131,12 @@
       .map((c) => `<a href="products.html?cat=${c.id}"><img src="images/categories/${c.id}.svg" alt="">${c.name}</a>`).join("");
 
     const render = (id, list) => document.getElementById(id).innerHTML = list.slice(0, 4).map(productCard).join("");
-    render("best", [...PRODUCTS].sort((a, b) => b.reviews - a.reviews));
+    render("best", byPopularity(PRODUCTS));
+
+    // 진행 중인 기획전 (마감이 가까운 순서로 2개)
+    const liveEvents = EVENTS.filter((ev) => eventStatus(ev).cls === "live").sort((a, b) => a.end.localeCompare(b.end)).slice(0, 2);
+    document.getElementById("events").innerHTML = liveEvents.map(eventCard).join("");
+    document.getElementById("event-section").hidden = !liveEvents.length;
     render("deal", [...PRODUCTS].sort((a, b) => discount(b) - discount(a)));
     render("gift", PRODUCTS.filter((p) => p.cat === "gift" || p.price >= 50000));
   </script>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>랭킹 - 베스트미트</title>
+  <link rel="icon" href="images/logo-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+
+  <main class="wrap">
+    <h1 class="page-title">랭킹</h1>
+    <div class="rank-tabs" role="tablist" aria-label="랭킹 기준">
+      <button type="button" role="tab" data-by="sales">판매 랭킹</button>
+      <button type="button" role="tab" data-by="rating">평점 랭킹</button>
+    </div>
+    <div class="chips small rank-cats" id="cats" role="radiogroup" aria-label="카테고리"></div>
+    <p class="rank-note" id="note"></p>
+    <div class="grid rank-grid" id="list"></div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/reviews-sample.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // 주소 예: ranking.html?by=rating&cat=beef (새로고침·공유해도 같은 화면)
+    const state = { by: param("by") === "rating" ? "rating" : "sales", cat: param("cat") || "" };
+
+    document.getElementById("cats").innerHTML = [{ id: "", name: "전체" }, ...CATEGORIES]
+      .map((c) => `<label><input type="radio" name="cat" value="${c.id}" ${c.id === state.cat ? "checked" : ""}><span>${c.name}</span></label>`).join("");
+
+    function draw() {
+      document.querySelectorAll(".rank-tabs button").forEach((b) => {
+        const on = b.dataset.by === state.by;
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-selected", on);
+      });
+      let list = PRODUCTS.filter((p) => !state.cat || p.cat === state.cat);
+      if (state.by === "sales") {
+        list = byPopularity(list);
+        document.getElementById("note").textContent = "누적 판매량을 기준으로 정했어요. (취소된 주문 제외)";
+      } else {
+        // 리뷰가 있는 상품만, 평균 별점 → 리뷰 수 순서로
+        list = list.map((p) => ({ p, s: Reviews.stats(p.id) })).filter((x) => x.s.n)
+          .sort((a, b) => b.s.avg - a.s.avg || b.s.n - a.s.n).map((x) => x.p);
+        document.getElementById("note").textContent = "리뷰 평균 별점이 높은 순서예요. (같으면 리뷰가 많은 순)";
+      }
+      list = list.slice(0, 20);
+      document.getElementById("list").innerHTML = list.length
+        ? list.map((p, i) => `<div class="rank-item"><span class="rank-no ${i < 3 ? "top r" + (i + 1) : ""}">${i + 1}</span>${productCard(p)}</div>`).join("")
+        : `<p class="empty" style="grid-column:1/-1">랭킹에 오른 상품이 없어요.</p>`;
+      history.replaceState(null, "", `ranking.html?by=${state.by}${state.cat ? "&cat=" + state.cat : ""}`);
+    }
+
+    document.querySelectorAll(".rank-tabs button").forEach((b) => b.addEventListener("click", () => { state.by = b.dataset.by; draw(); }));
+    document.querySelectorAll("input[name=cat]").forEach((r) => r.addEventListener("change", () => { state.cat = r.value; draw(); }));
+    draw();
+  </script>
+</body>
+</html>

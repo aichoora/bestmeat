@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기획전 - 베스트미트</title>
+  <link rel="icon" href="images/logo-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+
+  <main class="wrap">
+    <h1 class="page-title">기획전</h1>
+    <div class="chips small event-filter" id="filter" role="radiogroup" aria-label="기획전 상태">
+      <label><input type="radio" name="state" value="live" checked><span>진행중</span></label>
+      <label><input type="radio" name="state" value="ended"><span>종료된 기획전</span></label>
+    </div>
+    <div class="event-grid" id="list"></div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/reviews-sample.js"></script>
+  <script src="js/events.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function draw() {
+      const state = document.querySelector("input[name=state]:checked").value;
+      // 진행중 탭에는 오픈 예정도 함께, 마감이 가까운 순서로
+      const list = EVENTS
+        .filter((ev) => (eventStatus(ev).cls === "ended") === (state === "ended"))
+        .sort((a, b) => (state === "ended" ? b.end.localeCompare(a.end) : a.end.localeCompare(b.end)));
+      document.getElementById("list").innerHTML = list.length
+        ? list.map(eventCard).join("")
+        : `<p class="empty" style="grid-column:1/-1">${state === "ended" ? "종료된 기획전이 없어요." : "진행 중인 기획전이 없어요."}</p>`;
+    }
+    document.querySelectorAll("input[name=state]").forEach((r) => r.addEventListener("change", draw));
+    draw();
+  </script>
+</body>
+</html>

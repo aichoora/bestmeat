@@ -37,7 +37,7 @@
     sortEl.value = param("sort") || "reviews";
 
     const sorters = {
-      reviews: (a, b) => b.reviews - a.reviews,
+      reviews: null, // 인기순은 byPopularity로 (실제 주문 수량 반영)
       discount: (a, b) => discount(b) - discount(a),
       low: (a, b) => a.sale - b.sale,
       high: (a, b) => b.sale - a.sale,
@@ -46,7 +46,7 @@
 
     function draw() {
       let list = PRODUCTS.filter((p) => (!cat || p.cat === cat) && (!q || (p.name + p.origin).includes(q)));
-      list.sort(sorters[sortEl.value]);
+      list = sortEl.value === "reviews" ? byPopularity(list) : list.sort(sorters[sortEl.value]);
 
       const catName = CATEGORIES.find((c) => c.id === cat)?.name;
       document.getElementById("title").textContent = q ? `'${q}' 검색 결과` : (catName || "전체 상품");
