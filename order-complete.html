@@ -20,7 +20,7 @@
     const o = Orders.find(param("id"));
     const main = document.getElementById("main");
 
-    if (!o || !me || o.email !== me.email) {
+    if (!o || !me || (o.email !== me.email && !Auth.isAdmin())) {
       main.innerHTML = `<p class="empty">주문 정보를 찾을 수 없습니다.<br><br><a href="index.html" class="btn btn-red">메인으로</a></p>`;
     } else {
       const d = new Date(o.deliveryDate + "T00:00:00");

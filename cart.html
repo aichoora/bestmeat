@@ -20,9 +20,26 @@
   <script src="js/app.js"></script>
   <script>
     function draw() {
-      const { items, subtotal, saved, ship } = cartSummary();
+      const { items, soldOut, subtotal, saved, ship } = cartSummary();
       const box = document.getElementById("cart");
 
+      // 품절 상품: 주문에서 빠진다는 안내와 함께 따로 표시
+      const soldOutHtml = soldOut.length ? `
+        <div class="soldout-box">
+          <p><b>품절된 상품 ${soldOut.length}개</b>는 주문에서 제외됩니다.</p>
+          ${soldOut.map(({ p }) => `
+            <div class="cart-item muted">
+              <a href="product.html?id=${p.id}">${thumb(p)}</a>
+              <div><p class="name">${p.name} <small>${p.weight}</small></p><p class="origin">일시 품절</p></div>
+              <span></span>
+              <button class="remove" onclick="Cart.remove(${p.id}); draw()" aria-label="삭제">✕</button>
+            </div>`).join("")}
+        </div>` : "";
+
+      if (!items.length && soldOut.length) {
+        box.innerHTML = soldOutHtml + `<div class="empty"><a href="products.html" class="btn btn-red">다른 상품 보러 가기</a></div>`;
+        return;
+      }
       if (!items.length) {
         box.innerHTML = `<div class="empty"><p style="font-size:60px">🛒</p><p>장바구니가 비어 있어요.</p><br>
           <a href="products.html" class="btn btn-red">쇼핑하러 가기</a></div>`;
@@ -46,6 +63,7 @@
                 </div>
                 <button class="remove" onclick="Cart.remove(${p.id}); draw()" aria-label="삭제">✕</button>
               </div>`).join("")}
+            ${soldOutHtml}
           </div>
           <aside class="summary">
             <div><span>상품금액</span><span>${won(subtotal)}</span></div>

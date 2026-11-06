@@ -90,8 +90,6 @@
     if (!Auth.current()) location.replace("login.html?next=mypage.html");
 
     const e = escapeHtml;
-    const ACTIVE = ["결제완료", "입금대기", "상품준비중", "배송중"];
-    const statusClass = { 결제완료: "ok", 입금대기: "wait", 주문취소: "cancel" };
 
     // ---------- 탭 전환 (주소 끝 #orders 등으로 구분) ----------
     function showTab() {
@@ -107,7 +105,7 @@
       const me = Auth.profile();
       if (!me) return;
       const orders = Orders.mine();
-      const active = orders.filter((o) => ACTIVE.includes(o.status)).length;
+      const active = orders.filter((o) => Orders.isActive(o)).length;
       const spent = orders.filter((o) => o.status !== "주문취소").reduce((s, o) => s + o.amount.total, 0);
       const coupons = orders.length === 0 ? 1 : 0;
       $("summary").innerHTML = `
@@ -140,7 +138,7 @@
           <article class="box order-card">
             <div class="order-top">
               <span><b>${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}</b> 주문 · ${o.id}</span>
-              <em class="status ${statusClass[o.status] || ""}">${o.status}</em>
+              ${statusBadge(o.status)}
             </div>
             <div class="order-item">
               ${p ? thumb(p) : ""}
@@ -232,7 +230,8 @@
     // ---------- 회원 탈퇴 ----------
     $("wd-form").addEventListener("submit", async (ev) => {
       ev.preventDefault();
-      if (Orders.mine().some((o) => ACTIVE.includes(o.status))) {
+      if (Auth.isAdmin()) { alert("관리자 계정은 탈퇴할 수 없습니다."); return; }
+      if (Orders.mine().some((o) => Orders.isActive(o))) {
         alert("진행 중인 주문이 있어 탈퇴할 수 없습니다.\n주문을 취소하거나 배송이 끝난 뒤 다시 시도해 주세요.");
         return;
       }

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 - 베스트미트</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="admin-body">
+  <div class="admin">
+    <aside class="admin-side">
+      <a href="admin.html" class="logo small">BEST<span>MEAT</span> <small>관리자</small></a>
+      <nav id="menu">
+        <a href="#dashboard">📊 대시보드</a>
+        <a href="#orders">📦 주문 관리 <i id="pending-count" hidden></i></a>
+        <a href="#products">🥩 상품 관리</a>
+        <a href="#members">👥 회원 관리</a>
+      </nav>
+      <div class="side-bottom">
+        <a href="index.html" target="_blank">🏠 쇼핑몰 보기</a>
+        <a href="#" onclick="Auth.logout(); return false;">로그아웃</a>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <!-- 대시보드 -->
+      <section class="tab" id="tab-dashboard">
+        <h1>대시보드</h1>
+        <div class="stats" id="stats"></div>
+        <div class="admin-grid">
+          <div class="panel">
+            <div class="panel-head"><h2>최근 주문</h2><a href="#orders">전체 보기 ›</a></div>
+            <div id="recent"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>많이 팔린 상품</h2></div>
+            <div id="best"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 주문 관리 -->
+      <section class="tab" id="tab-orders" hidden>
+        <h1>주문 관리</h1>
+        <div class="panel">
+          <div class="filter-bar">
+            <div class="chips small" id="status-filter"></div>
+            <input type="search" id="order-q" placeholder="주문번호, 주문자, 받는 분 검색">
+          </div>
+          <div class="table-wrap"><table class="table" id="order-table"></table></div>
+        </div>
+      </section>
+
+      <!-- 상품 관리 -->
+      <section class="tab" id="tab-products" hidden>
+        <h1>상품 관리</h1>
+        <div class="panel">
+          <div class="filter-bar">
+            <div class="inline">
+              <select id="prod-cat"><option value="">전체 카테고리</option></select>
+              <input type="search" id="prod-q" placeholder="상품명 검색">
+            </div>
+            <div class="inline">
+              <button type="button" class="btn btn-line" onclick="resetProducts()">기본 상품으로 초기화</button>
+              <button type="button" class="btn btn-red" onclick="openProduct()">+ 상품 등록</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table class="table" id="product-table"></table></div>
+        </div>
+      </section>
+
+      <!-- 회원 관리 -->
+      <section class="tab" id="tab-members" hidden>
+        <h1>회원 관리</h1>
+        <div class="panel">
+          <div class="filter-bar">
+            <span id="member-count" class="muted-text"></span>
+            <input type="search" id="member-q" placeholder="이름, 이메일, 연락처 검색">
+          </div>
+          <div class="table-wrap"><table class="table" id="member-table"></table></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 상품 등록/수정 창 -->
+  <div class="overlay" id="product-layer" hidden>
+    <form class="modal" id="product-form" novalidate>
+      <div class="addr-head"><b id="product-title">상품 등록</b><button type="button" onclick="closeProduct()" aria-label="닫기">✕</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="f-id">
+        <div class="field"><label for="f-name">상품명 <i>*</i></label><input id="f-name" maxlength="40"><p class="msg"></p></div>
+        <div class="cols">
+          <div class="field"><label for="f-cat">카테고리</label><select id="f-cat"></select></div>
+          <div class="field"><label for="f-badge">배지</label>
+            <select id="f-badge"><option value="">없음</option><option>BEST</option><option>NEW</option><option>SALE</option></select></div>
+        </div>
+        <div class="cols">
+          <div class="field"><label for="f-origin">원산지 <i>*</i></label><input id="f-origin" placeholder="국내산 (한우)"><p class="msg"></p></div>
+          <div class="field"><label for="f-grade">등급</label><input id="f-grade" placeholder="1++ (없으면 비워두세요)"></div>
+        </div>
+        <div class="cols">
+          <div class="field"><label for="f-weight">중량 <i>*</i></label><input id="f-weight" placeholder="500g"><p class="msg"></p></div>
+          <div class="field"><label>썸네일 (이모지 · 배경색)</label>
+            <div class="inline"><input id="f-emoji" maxlength="4" style="width:70px;text-align:center"><input id="f-tone" type="color" class="color"></div></div>
+        </div>
+        <div class="cols">
+          <div class="field"><label for="f-price">정가 (원) <i>*</i></label><input id="f-price" type="number" min="0" step="100"><p class="msg"></p></div>
+          <div class="field"><label for="f-sale">판매가 (원) <i>*</i></label><input id="f-sale" type="number" min="0" step="100"><p class="msg"></p></div>
+        </div>
+        <div class="field"><label for="f-desc">상품 설명</label><textarea id="f-desc" rows="3"></textarea></div>
+        <label class="check"><input type="checkbox" id="f-soldout"> 품절 처리 (쇼핑몰에서 구매 불가)</label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-line" onclick="closeProduct()">취소</button>
+        <button class="btn btn-red">저장</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const e = escapeHtml;
+
+    // 관리자만 접근 가능
+    if (!Auth.isAdmin()) {
+      alert("관리자만 접근할 수 있습니다. 관리자 계정으로 로그인해 주세요.");
+      Auth.current() ? location.replace("index.html") : location.replace("login.html?next=admin.html");
+    }
+
+    const fmtDate = (iso, time = true) => {
+      const d = new Date(iso);
+      const p = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}` + (time ? ` ${p(d.getHours())}:${p(d.getMinutes())}` : "");
+    };
+    const payName = { card: "신용카드", transfer: "계좌이체", deposit: "무통장", phone: "휴대폰" };
+    const members = () => Auth.users().filter((u) => u.role !== "admin");
+    const itemsText = (o) => e(o.items[0]?.name || "-") + (o.items.length > 1 ? ` 외 ${o.items.length - 1}건` : "");
+    const isSale = (o) => o.status !== "주문취소" && o.status !== "입금대기"; // 매출로 잡히는 주문
+
+    // ---------- 탭 ----------
+    const TABS = ["dashboard", "orders", "products", "members"];
+    function showTab() {
+      const name = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "dashboard";
+      document.querySelectorAll(".tab").forEach((t) => (t.hidden = t.id !== "tab-" + name));
+      document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.hash === "#" + name));
+      ({ dashboard: drawDashboard, orders: drawOrders, products: drawProducts, members: drawMembers })[name]();
+    }
+    window.addEventListener("hashchange", showTab);
+
+    // 처리 대기 주문 수 (메뉴 옆 숫자)
+    function updatePending() {
+      const n = Orders.all().filter((o) => o.status === "결제완료" || o.status === "입금대기").length;
+      $("pending-count").textContent = n;
+      $("pending-count").hidden = !n;
+    }
+
+    // ---------- 대시보드 ----------
+    function drawDashboard() {
+      const orders = Orders.all();
+      const today = new Date().toDateString();
+      const todayOrders = orders.filter((o) => new Date(o.createdAt).toDateString() === today);
+      const sum = (list) => list.filter(isSale).reduce((s, o) => s + o.amount.total, 0);
+      const count = (s) => orders.filter((o) => o.status === s).length;
+
+      $("stats").innerHTML = [
+        ["오늘 주문", `${todayOrders.length}건`, `누적 ${orders.length}건`],
+        ["오늘 매출", won(sum(todayOrders)), `누적 ${won(sum(orders))}`],
+        ["처리 대기", `${count("결제완료") + count("입금대기")}건`, `결제완료 ${count("결제완료")} · 입금대기 ${count("입금대기")}`],
+        ["전체 회원", `${members().length}명`, `품절 상품 ${PRODUCTS.filter((p) => p.soldOut).length}개`],
+      ].map(([label, value, sub]) => `<div class="stat"><small>${label}</small><b>${value}</b><span>${sub}</span></div>`).join("");
+
+      const recent = [...orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6);
+      $("recent").innerHTML = recent.length
+        ? `<table class="table"><tbody>${recent.map((o) => `
+            <tr><td>${fmtDate(o.createdAt)}</td><td>${itemsText(o)}</td><td class="num">${won(o.amount.total)}</td><td>${statusBadge(o.status)}</td></tr>`).join("")}
+          </tbody></table>`
+        : `<p class="empty small">아직 주문이 없습니다.</p>`;
+
+      // 취소되지 않은 주문의 상품별 판매 수량
+      const sold = {};
+      orders.filter((o) => o.status !== "주문취소").forEach((o) => o.items.forEach((i) => {
+        sold[i.id] = sold[i.id] || { name: i.name, qty: 0, amount: 0 };
+        sold[i.id].qty += i.qty;
+        sold[i.id].amount += i.price * i.qty;
+      }));
+      const top = Object.values(sold).sort((a, b) => b.qty - a.qty).slice(0, 5);
+      const max = top[0]?.qty || 1;
+      $("best").innerHTML = top.length
+        ? top.map((t, i) => `
+            <div class="bar-row"><span class="rank">${i + 1}</span>
+              <div><p>${e(t.name)}</p><div class="bar"><i style="width:${(t.qty / max) * 100}%"></i></div></div>
+              <b>${t.qty}개</b></div>`).join("")
+        : `<p class="empty small">판매 기록이 없습니다.</p>`;
+    }
+
+    // ---------- 주문 관리 ----------
+    let statusFilter = "";
+    function drawOrders() {
+      const orders = Orders.all();
+      const counts = Object.fromEntries(ORDER_STATUS.all.map((s) => [s, orders.filter((o) => o.status === s).length]));
+      $("status-filter").innerHTML = [["", "전체", orders.length], ...ORDER_STATUS.all.map((s) => [s, s, counts[s]])]
+        .map(([v, label, n]) => `<label><input type="radio" name="sf" value="${v}" ${v === statusFilter ? "checked" : ""}><span>${label} ${n}</span></label>`).join("");
+
+      const q = $("order-q").value.trim();
+      const list = orders
+        .filter((o) => !statusFilter || o.status === statusFilter)
+        .filter((o) => !q || [o.id, o.email, o.receiver?.name].some((v) => String(v || "").includes(q)))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+      const users = Object.fromEntries(Auth.users().map((u) => [u.email, u.name]));
+      $("order-table").innerHTML = `
+        <thead><tr><th>주문일시</th><th>주문번호</th><th>주문자</th><th>상품</th><th>받는 분 / 도착 희망일</th><th class="num">결제금액</th><th>결제</th><th>상태</th></tr></thead>
+        <tbody>${list.length ? list.map((o) => `
+          <tr>
+            <td>${fmtDate(o.createdAt)}</td>
+            <td><a href="order-complete.html?id=${o.id}" target="_blank" class="link">${o.id}</a></td>
+            <td>${e(users[o.email] || "(탈퇴 회원)")}<small>${e(o.email)}</small></td>
+            <td>${itemsText(o)}</td>
+            <td>${e(o.receiver?.name || "-")}<small>${o.deliveryDate || ""}</small></td>
+            <td class="num">${won(o.amount.total)}</td>
+            <td>${payName[o.payment?.method] || "-"}</td>
+            <td><select class="status-select ${ORDER_STATUS.css[o.status] || ""}" onchange="changeStatus('${o.id}', this)">
+              ${ORDER_STATUS.all.map((s) => `<option ${s === o.status ? "selected" : ""}>${s}</option>`).join("")}
+            </select></td>
+          </tr>`).join("") : `<tr><td colspan="8" class="empty small">조건에 맞는 주문이 없습니다.</td></tr>`}
+        </tbody>`;
+      updatePending();
+    }
+    $("status-filter").addEventListener("change", (ev) => { statusFilter = ev.target.value; drawOrders(); });
+    $("order-q").addEventListener("input", drawOrders);
+
+    function changeStatus(id, select) {
+      const o = Orders.find(id);
+      const next = select.value;
+      if (next === "주문취소" && !confirm(`주문 ${id}을(를) 취소 처리할까요?`)) { select.value = o.status; return; }
+      if (o.status === "주문취소" && !confirm("취소된 주문을 다시 진행 상태로 바꿀까요?")) { select.value = o.status; return; }
+      Orders.update(id, { status: next, [`statusAt_${next}`]: new Date().toISOString() });
+      toast(`주문 상태를 '${next}'(으)로 바꿨습니다.`);
+      drawOrders();
+    }
+
+    // ---------- 상품 관리 ----------
+    CATEGORIES.forEach((c) => {
+      $("prod-cat").insertAdjacentHTML("beforeend", `<option value="${c.id}">${c.name}</option>`);
+      $("f-cat").insertAdjacentHTML("beforeend", `<option value="${c.id}">${c.name}</option>`);
+    });
+    const catName = (id) => CATEGORIES.find((c) => c.id === id)?.name || "-";
+
+    function drawProducts() {
+      const cat = $("prod-cat").value;
+      const q = $("prod-q").value.trim();
+      const list = PRODUCTS.filter((p) => (!cat || p.cat === cat) && (!q || p.name.includes(q)));
+      $("product-table").innerHTML = `
+        <thead><tr><th>상품</th><th>카테고리</th><th>원산지 · 중량</th><th class="num">정가</th><th class="num">판매가</th><th>판매 상태</th><th></th></tr></thead>
+        <tbody>${list.length ? list.map((p) => `
+          <tr class="${p.soldOut ? "muted" : ""}">
+            <td><div class="prod-cell"><span class="mini-thumb" style="--tone:${p.tone}">${e(p.emoji)}</span>
+              <div><a href="product.html?id=${p.id}" target="_blank" class="link">${e(p.name)}</a>${p.badge ? ` <em class="badge-mini">${p.badge}</em>` : ""}<small>#${p.id}</small></div></div></td>
+            <td>${catName(p.cat)}</td>
+            <td>${e(p.origin)}<small>${e(p.weight)}</small></td>
+            <td class="num">${won(p.price)}</td>
+            <td class="num"><b>${won(p.sale)}</b><small class="red">${discount(p)}% 할인</small></td>
+            <td><label class="switch"><input type="checkbox" ${p.soldOut ? "" : "checked"} onchange="toggleSoldOut(${p.id}, !this.checked)"><span></span>${p.soldOut ? "품절" : "판매중"}</label></td>
+            <td class="actions-cell">
+              <button type="button" class="btn btn-line sm" onclick="openProduct(${p.id})">수정</button>
+              <button type="button" class="btn btn-line sm danger" onclick="deleteProduct(${p.id})">삭제</button>
+            </td>
+          </tr>`).join("") : `<tr><td colspan="7" class="empty small">상품이 없습니다.</td></tr>`}
+        </tbody>`;
+    }
+    $("prod-cat").addEventListener("change", drawProducts);
+    $("prod-q").addEventListener("input", drawProducts);
+
+    function toggleSoldOut(id, soldOut) {
+      Products.upsert({ ...findProduct(id), soldOut });
+      toast(soldOut ? "품절 처리했습니다." : "판매를 재개했습니다.");
+      drawProducts();
+    }
+
+    function deleteProduct(id) {
+      const p = findProduct(id);
+      if (!confirm(`'${p.name}' 상품을 삭제할까요?\n삭제하면 쇼핑몰과 고객 장바구니에서 사라집니다. (기존 주문 내역은 유지)`)) return;
+      Products.remove(id);
+      toast("상품을 삭제했습니다.");
+      drawProducts();
+    }
+
+    function resetProducts() {
+      if (!confirm("관리자가 등록·수정한 내용을 모두 지우고 처음 상품 목록으로 되돌릴까요?")) return;
+      Products.reset();
+      toast("기본 상품으로 되돌렸습니다.");
+      drawProducts();
+    }
+
+    // 등록/수정 창
+    const FIELDS = ["name", "cat", "badge", "origin", "grade", "weight", "emoji", "tone", "price", "sale", "desc"];
+    function openProduct(id) {
+      const p = id ? findProduct(id) : { cat: $("prod-cat").value || "beef", emoji: "🥩", tone: "#b23a3a", grade: "", badge: "" };
+      $("product-title").textContent = id ? "상품 수정" : "상품 등록";
+      $("f-id").value = id || "";
+      FIELDS.forEach((k) => ($("f-" + k).value = k === "grade" && p.grade === "-" ? "" : p[k] ?? ""));
+      $("f-soldout").checked = !!p.soldOut;
+      document.querySelectorAll("#product-form .field").forEach((f) => f.classList.remove("invalid"));
+      document.querySelectorAll("#product-form .msg").forEach((m) => (m.textContent = ""));
+      $("product-layer").hidden = false;
+      $("f-name").focus();
+    }
+    function closeProduct() { $("product-layer").hidden = true; }
+    $("product-layer").addEventListener("click", (ev) => ev.target.id === "product-layer" && closeProduct());
+    document.addEventListener("keydown", (ev) => ev.key === "Escape" && closeProduct());
+
+    function setField(input, err) {
+      const field = input.closest(".field");
+      field.classList.toggle("invalid", !!err);
+      field.querySelector(".msg").textContent = err;
+      return !err;
+    }
+
+    $("product-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const v = Object.fromEntries(FIELDS.map((k) => [k, $("f-" + k).value.trim()]));
+      const price = Number(v.price), sale = Number(v.sale);
+      const ok = [
+        setField($("f-name"), v.name ? "" : "상품명을 입력해 주세요."),
+        setField($("f-origin"), v.origin ? "" : "원산지를 입력해 주세요."),
+        setField($("f-weight"), v.weight ? "" : "중량을 입력해 주세요."),
+        setField($("f-price"), price > 0 ? "" : "정가를 입력해 주세요."),
+        setField($("f-sale"), !(sale > 0) ? "판매가를 입력해 주세요." : sale > price ? "판매가는 정가보다 클 수 없습니다." : ""),
+      ].every(Boolean);
+      if (!ok) { document.querySelector("#product-form .field.invalid input")?.focus(); return; }
+
+      const id = Number($("f-id").value) || undefined;
+      Products.upsert({ ...(id ? findProduct(id) : {}), ...v, id, price, sale, soldOut: $("f-soldout").checked });
+      closeProduct();
+      toast(id ? "상품을 수정했습니다." : "상품을 등록했습니다.");
+      drawProducts();
+    });
+
+    // ---------- 회원 관리 ----------
+    function drawMembers() {
+      const orders = Orders.all();
+      const q = $("member-q").value.trim().toLowerCase();
+      const list = members()
+        .filter((u) => !q || [u.name, u.email, u.phone].some((v) => String(v || "").toLowerCase().includes(q)))
+        .sort((a, b) => b.joinedAt.localeCompare(a.joinedAt));
+      $("member-count").textContent = `총 ${members().length}명`;
+      $("member-table").innerHTML = `
+        <thead><tr><th>가입일</th><th>이름</th><th>이메일</th><th>연락처</th><th>이벤트 수신</th><th class="num">주문</th><th class="num">구매금액</th></tr></thead>
+        <tbody>${list.length ? list.map((u) => {
+          const mine = orders.filter((o) => o.email === u.email);
+          const spent = mine.filter(isSale).reduce((s, o) => s + o.amount.total, 0);
+          return `<tr>
+            <td>${fmtDate(u.joinedAt, false)}</td>
+            <td><b>${e(u.name)}</b></td>
+            <td>${e(u.email)}</td>
+            <td>${e(u.phone)}</td>
+            <td>${u.marketing ? "✅ 동의" : "<span class='muted-text'>거부</span>"}</td>
+            <td class="num">${mine.length}건</td>
+            <td class="num">${won(spent)}</td>
+          </tr>`;
+        }).join("") : `<tr><td colspan="7" class="empty small">회원이 없습니다.</td></tr>`}
+        </tbody>`;
+    }
+    $("member-q").addEventListener("input", drawMembers);
+
+    // ---------- 시작 ----------
+    if (Auth.isAdmin()) { updatePending(); showTab(); }
+  </script>
+</body>
+</html>

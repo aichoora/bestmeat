@@ -31,7 +31,8 @@
     </form>
 
     <p class="links">아직 회원이 아니신가요? <a href="signup.html">회원가입</a></p>
-    <p class="demo-note">※ 시안용 화면입니다. 회원 정보는 이 브라우저에만 저장됩니다.</p>
+    <p class="demo-note">※ 시안용 화면입니다. 회원 정보는 이 브라우저에만 저장됩니다.<br>
+      관리자 체험 계정: <b>admin@bestmeat.com</b> / <b>admin1234</b></p>
   </main>
 
   <footer id="footer"></footer>
@@ -63,7 +64,7 @@
         if (rememberEl.checked) Auth.write("bestmeat_saved_email", email);
         else try { localStorage.removeItem("bestmeat_saved_email"); } catch {}
         const next = param("next");
-        location.href = next && /^[\w-]+\.html/.test(next) ? next : "index.html";
+        location.href = next && /^[\w-]+\.html/.test(next) ? next : Auth.isAdmin() ? "admin.html" : "index.html";
       } else {
         errorEl.textContent = "이메일 또는 비밀번호가 올바르지 않습니다.";
         pwEl.value = "";

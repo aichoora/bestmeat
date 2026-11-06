@@ -30,7 +30,7 @@
           <div>
             <p class="origin"><a href="products.html?cat=${p.cat}">${catName}</a> › ${p.origin}</p>
             <h1>${p.name}</h1>
-            <p class="rating">★ ${p.rating} <span>리뷰 ${p.reviews.toLocaleString()}개</span></p>
+            <p class="rating">${p.reviews ? `★ ${p.rating} <span>리뷰 ${p.reviews.toLocaleString()}개</span>` : `<span>새 상품</span>`}</p>
             <p class="price"><b class="rate">${discount(p)}%</b> <strong>${won(p.sale)}</strong> <del>${won(p.price)}</del></p>
             <dl class="info">
               <div><dt>원산지</dt><dd>${p.origin}</dd></div>
@@ -45,8 +45,10 @@
             </div>
             <div class="total"><span>총 상품금액</span><strong id="total">${won(p.sale)}</strong></div>
             <div class="actions">
-              <button class="btn btn-line" onclick="addToCart(p.id, getQty())">장바구니</button>
-              <button class="btn btn-red" onclick="addToCart(p.id, getQty()); location.href='cart.html'">바로 구매</button>
+              ${p.soldOut
+                ? `<button class="btn btn-line" disabled>일시 품절된 상품입니다</button>`
+                : `<button class="btn btn-line" onclick="addToCart(p.id, getQty())">장바구니</button>
+                   <button class="btn btn-red" onclick="if (addToCart(p.id, getQty())) location.href='cart.html'">바로 구매</button>`}
             </div>
           </div>
         </div>

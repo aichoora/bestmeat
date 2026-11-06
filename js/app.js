@@ -42,6 +42,8 @@ const Cart = {
 };
 
 // ---------- 회원 (시안용: 브라우저 localStorage에 저장) ----------
+const ADMIN = { email: "admin@bestmeat.com", password: "admin1234", name: "관리자" };
+
 // 실제 서비스에서는 반드시 서버에서 회원 정보와 비밀번호를 관리해야 합니다.
 const Auth = {
   usersKey: "bestmeat_users",
@@ -58,17 +60,30 @@ const Auth = {
     return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
   },
   users() { return this.read(this.usersKey, []); },
-  exists(email) { return this.users().some((u) => u.email === email.toLowerCase()); },
+  exists(email) {
+    const e = email.toLowerCase();
+    return e === ADMIN.email || this.users().some((u) => u.email === e);
+  },
+  // 시안용 관리자 계정: 처음 로그인할 때 자동으로 만들어집니다.
+  async ensureAdmin() {
+    if (this.users().some((u) => u.email === ADMIN.email)) return;
+    this.write(this.usersKey, [...this.users(), {
+      email: ADMIN.email, password: await this.hash(ADMIN.password), name: ADMIN.name,
+      phone: "010-0000-0000", role: "admin", joinedAt: new Date().toISOString(),
+    }]);
+  },
+  isAdmin() { return this.current()?.role === "admin"; },
   async signup({ email, password, name, phone, marketing }) {
     const users = this.users();
     users.push({ email: email.toLowerCase(), password: await this.hash(password), name, phone, marketing, joinedAt: new Date().toISOString() });
     this.write(this.usersKey, users);
   },
   async login(email, password) {
+    await this.ensureAdmin();
     const hashed = await this.hash(password);
     const user = this.users().find((u) => u.email === email.toLowerCase() && u.password === hashed);
     if (!user) return false;
-    this.write(this.sessionKey, { email: user.email, name: user.name });
+    this.write(this.sessionKey, { email: user.email, name: user.name, role: user.role || "member" });
     Cart.mergeGuest();
     return true;
   },
@@ -97,7 +112,7 @@ const Auth = {
   },
   withdraw() {
     const me = this.current();
-    if (!me) return;
+    if (!me || me.role === "admin") return;
     this.write(this.usersKey, this.users().filter((u) => u.email !== me.email));
     Cart.clearFor(me.email);
     try { localStorage.removeItem(this.sessionKey); } catch {}
@@ -107,6 +122,14 @@ const Auth = {
 // ---------- 주문 (시안용: localStorage에 저장) ----------
 const SHIPPING = { free: 50000, fee: 3500 };
 const FIRST_COUPON = { rate: 0.1, max: 10000 }; // 첫 구매 10% (최대 1만원)
+
+// 주문 상태 흐름: 입금대기 → 결제완료 → 상품준비중 → 배송중 → 배송완료 (언제든 주문취소 가능)
+const ORDER_STATUS = {
+  all: ["입금대기", "결제완료", "상품준비중", "배송중", "배송완료", "주문취소"],
+  active: ["입금대기", "결제완료", "상품준비중", "배송중"],
+  css: { 입금대기: "wait", 결제완료: "ok", 상품준비중: "prep", 배송중: "ship", 배송완료: "done", 주문취소: "cancel" },
+};
+const statusBadge = (s) => `<em class="status ${ORDER_STATUS.css[s] || ""}">${s}</em>`;
 
 const Orders = {
   key: "bestmeat_orders",
@@ -121,6 +144,7 @@ const Orders = {
   },
   // 결제완료/입금대기 상태일 때만 취소 가능 (상품 준비가 시작되면 불가)
   canCancel(o) { return o.status === "결제완료" || o.status === "입금대기"; },
+  isActive(o) { return ORDER_STATUS.active.includes(o.status); },
   create(order) {
     const d = new Date();
     const pad = (n) => String(n).padStart(2, "0");
@@ -131,13 +155,62 @@ const Orders = {
   },
 };
 
-// 장바구니 금액 계산 (장바구니, 주문서에서 함께 사용)
+// ---------- 상품 (관리자가 수정하면 localStorage에 저장, 없으면 data.js 기본값) ----------
+const Products = {
+  key: "bestmeat_products",
+  defaults: PRODUCTS.map((p) => ({ ...p })),
+  // 저장된 상품 목록이 있으면 PRODUCTS 내용을 그것으로 교체 (모든 페이지가 PRODUCTS를 사용)
+  apply() {
+    const saved = Auth.read(this.key, null);
+    if (Array.isArray(saved)) PRODUCTS.splice(0, PRODUCTS.length, ...saved);
+  },
+  saveAll(list) {
+    Auth.write(this.key, list);
+    PRODUCTS.splice(0, PRODUCTS.length, ...list);
+  },
+  // 관리자 입력값 정리: 태그 문자 제거, 색상/배지 형식 제한
+  clean(p) {
+    const text = (s) => String(s ?? "").replace(/[<>]/g, "").trim();
+    return {
+      ...p,
+      name: text(p.name), origin: text(p.origin), grade: text(p.grade) || "-", weight: text(p.weight),
+      desc: text(p.desc), emoji: text(p.emoji).slice(0, 4) || "🥩",
+      tone: /^#[0-9a-f]{6}$/i.test(p.tone) ? p.tone : "#b23a3a",
+      badge: ["BEST", "NEW", "SALE"].includes(p.badge) ? p.badge : "",
+      cat: CATEGORIES.some((c) => c.id === p.cat) ? p.cat : CATEGORIES[0].id,
+      price: Math.max(0, Math.round(Number(p.price) || 0)),
+      sale: Math.max(0, Math.round(Number(p.sale) || 0)),
+      soldOut: !!p.soldOut,
+    };
+  },
+  upsert(p) {
+    const item = this.clean(p);
+    if (!item.id) {
+      item.id = Math.max(0, ...PRODUCTS.map((x) => x.id)) + 1;
+      item.rating = 0;
+      item.reviews = 0;
+    }
+    const exists = PRODUCTS.some((x) => x.id === item.id);
+    this.saveAll(exists ? PRODUCTS.map((x) => (x.id === item.id ? { ...x, ...item } : x)) : [...PRODUCTS, item]);
+    return item;
+  },
+  remove(id) { this.saveAll(PRODUCTS.filter((x) => x.id !== id)); },
+  reset() {
+    try { localStorage.removeItem(this.key); } catch {}
+    PRODUCTS.splice(0, PRODUCTS.length, ...this.defaults.map((p) => ({ ...p })));
+  },
+};
+Products.apply();
+
+// 장바구니 금액 계산 (장바구니, 주문서에서 함께 사용). 품절 상품은 주문에서 제외.
 function cartSummary() {
-  const items = Cart.get().map((i) => ({ ...i, p: findProduct(i.id) })).filter((i) => i.p);
+  const all = Cart.get().map((i) => ({ ...i, p: findProduct(i.id) })).filter((i) => i.p);
+  const items = all.filter((i) => !i.p.soldOut);
+  const soldOut = all.filter((i) => i.p.soldOut);
   const subtotal = items.reduce((s, i) => s + i.p.sale * i.qty, 0);
   const saved = items.reduce((s, i) => s + (i.p.price - i.p.sale) * i.qty, 0);
   const ship = !items.length || subtotal >= SHIPPING.free ? 0 : SHIPPING.fee;
-  return { items, subtotal, saved, ship };
+  return { items, soldOut, subtotal, saved, ship };
 }
 
 // 휴대폰 번호 입력칸에 자동 하이픈 (010-1234-5678)
@@ -169,15 +242,18 @@ function toast(msg) {
 }
 
 function addToCart(id, qty = 1) {
+  if (findProduct(id)?.soldOut) { toast("품절된 상품입니다."); return false; }
   Cart.add(id, qty);
   toast("장바구니에 담았습니다 🛒");
+  return true;
 }
 
 // ---------- 상품 카드 ----------
 function thumb(p, big = false) {
-  return `<div class="thumb ${big ? "big" : ""}" style="--tone:${p.tone}">
+  return `<div class="thumb ${big ? "big" : ""} ${p.soldOut ? "soldout" : ""}" style="--tone:${p.tone}">
     <span>${p.emoji}</span>
     ${p.badge ? `<em class="badge badge-${p.badge.toLowerCase()}">${p.badge}</em>` : ""}
+    ${p.soldOut ? `<b class="soldout-label">품절</b>` : ""}
   </div>`;
 }
 
@@ -185,13 +261,13 @@ function productCard(p) {
   return `<article class="card">
     <div class="thumb-wrap">
       <a href="product.html?id=${p.id}">${thumb(p)}</a>
-      <button class="btn-cart" onclick="addToCart(${p.id})" aria-label="장바구니 담기">🛒 담기</button>
+      ${p.soldOut ? "" : `<button class="btn-cart" onclick="addToCart(${p.id})" aria-label="장바구니 담기">🛒 담기</button>`}
     </div>
     <div class="card-body">
       <p class="origin">${p.origin}${p.grade !== "-" ? " · " + p.grade : ""}</p>
       <a href="product.html?id=${p.id}" class="name">${p.name} <small>${p.weight}</small></a>
       <p class="price"><b class="rate">${discount(p)}%</b> <strong>${won(p.sale)}</strong> <del>${won(p.price)}</del></p>
-      <p class="rating">★ ${p.rating} <span>(${p.reviews.toLocaleString()})</span></p>
+      ${p.reviews ? `<p class="rating">★ ${p.rating} <span>(${p.reviews.toLocaleString()})</span></p>` : `<p class="rating"><span>새 상품</span></p>`}
     </div>
   </article>`;
 }
@@ -210,7 +286,7 @@ function renderLayout() {
         </form>
         <nav class="util">
           ${Auth.current()
-            ? `<a href="mypage.html"><b>${escapeHtml(Auth.current().name)}</b>님 · 마이페이지</a><a href="#" onclick="Auth.logout(); return false;">로그아웃</a>`
+            ? `${Auth.isAdmin() ? `<a href="admin.html" class="admin-link">⚙️ 관리자</a>` : ""}<a href="mypage.html"><b>${escapeHtml(Auth.current().name)}</b>님 · 마이페이지</a><a href="#" onclick="Auth.logout(); return false;">로그아웃</a>`
             : `<a href="login.html">로그인</a><a href="signup.html">회원가입</a>`}
           <a href="cart.html" class="cart-link">🛒 장바구니 <i id="cart-count" hidden>0</i></a>
         </nav>
