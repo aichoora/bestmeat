@@ -145,6 +145,27 @@ button { font: inherit; cursor: pointer; border: 0; }
 .price del { color: #aaa; font-size: 13px; margin-left: 4px; }
 .rating { font-size: 13px; color: #e0a100; margin-top: 2px; }
 .rating span { color: var(--gray); }
+/* ---------- 적립금 ---------- */
+.points-use { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e5dcd6; }
+.points-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.points-head label { font-weight: 700; font-size: 15px; }
+.points-head span { font-size: 14px; color: var(--gray); }
+.points-head b { color: var(--ink); }
+.points-use input { text-align: right; }
+.points-use input:disabled { background: #f6f6f6; }
+.earn-note { margin-top: 8px; font-size: 13px; color: #1e6b3a; text-align: right; }
+.points-card { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.points-card > div { background: var(--bg); border-radius: var(--radius); padding: 20px 22px; }
+.points-card small { display: block; color: var(--gray); font-size: 13px; }
+.points-card b { font-size: 26px; }
+.points-card > div:first-child b { color: var(--red); }
+.points-rules { margin: 0 0 20px 18px; color: #555; font-size: 14px; line-height: 1.8; }
+.points-rules b { color: var(--ink); }
+.num.plus { color: #1e6b3a; font-weight: 700; }
+.num.minus { color: var(--red); font-weight: 700; }
+.link.small { font-size: 12px; margin-left: 4px; }
+.review-earn { padding: 0 22px 10px; font-size: 13px; color: #1e6b3a; }
+
 /* ---------- 고객센터 ---------- */
 .cs-top { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; margin: 16px 0 28px; }
 .cs-top > * { background: var(--bg); border-radius: var(--radius); padding: 22px 24px; }
@@ -417,7 +438,7 @@ button { font: inherit; cursor: pointer; border: 0; }
 .done-actions .btn { min-width: 160px; text-align: center; }
 
 /* ---------- 마이페이지 ---------- */
-.my-summary { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; background: var(--bg); border-radius: var(--radius); margin: 16px 0 28px; }
+.my-summary { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; background: var(--bg); border-radius: var(--radius); margin: 16px 0 28px; }
 .my-summary > * { padding: 22px 24px; }
 .my-summary > *:not(:first-child) { border-left: 1px solid #eadfd9; display: flex; flex-direction: column; justify-content: center; }
 .my-summary small { display: block; color: var(--gray); font-size: 13px; }
@@ -588,9 +609,10 @@ footer .logo { margin-bottom: 10px; }
   .my-layout { grid-template-columns: 1fr; gap: 20px; }
   .my-menu { flex-direction: row; overflow-x: auto; position: static; }
   .my-menu a { border-bottom: 0; border-right: 1px solid var(--line); white-space: nowrap; }
-  .my-summary { grid-template-columns: 1fr 1fr 1fr; }
+  .my-summary { grid-template-columns: 1fr 1fr; }
   .my-summary > .hello { grid-column: 1 / -1; border-bottom: 1px solid #eadfd9; }
-  .my-summary > *:nth-child(2) { border-left: 0; }
+  .my-summary > *:nth-child(2n) { border-left: 0; }
+  .my-summary > *:nth-child(n+4) { border-top: 1px solid #eadfd9; }
   .hero { height: 340px; }
   .hero h1, .hero h2 { font-size: 28px; }
   .hero-slide::after { background: linear-gradient(90deg, rgba(0,0,0,.75), rgba(0,0,0,.35)); }

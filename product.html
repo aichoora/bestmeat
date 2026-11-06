@@ -41,6 +41,7 @@
               <div><dt>등급</dt><dd>${p.grade}</dd></div>
               <div><dt>중량</dt><dd id="weight"></dd></div>
               <div><dt>배송</dt><dd>냉장 택배 · 오후 3시 전 주문 시 오늘 출발</dd></div>
+              <div><dt>적립</dt><dd id="earn"></dd></div>
             </dl>
             ${opts.length > 1 ? `
             <div class="opt-select">
@@ -111,6 +112,7 @@
       document.getElementById("price").innerHTML = `<b class="rate">${rate}%</b> <strong>${won(o.sale)}</strong> <del>${won(o.price)}</del>`;
       document.getElementById("weight").textContent = o.label;
       document.getElementById("total").textContent = won(o.sale * getQty());
+      document.getElementById("earn").textContent = `${won(Math.floor(o.sale * getQty() * POINTS.rate))} (구매 금액의 1%, 배송완료 후)`;
     }
     if (p) update();
 
@@ -154,7 +156,8 @@
       openReviewForm(targets, drawReviews);
     }
     function deleteReview(id) {
-      if (!confirm("이 리뷰를 삭제할까요?")) return;
+      if (Points.balance() < POINTS.review) { alert(`리뷰 적립금(${won(POINTS.review)})을 이미 사용해서 리뷰를 삭제할 수 없어요.`); return; }
+      if (!confirm(`이 리뷰를 삭제할까요?\n리뷰 적립금 ${won(POINTS.review)}도 함께 회수됩니다.`)) return;
       Reviews.remove(id);
       toast("리뷰를 삭제했습니다.");
       drawReviews();

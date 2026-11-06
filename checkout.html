@@ -64,6 +64,11 @@
         <section class="box">
           <h2>할인 혜택</h2>
           <div id="coupon"></div>
+          <div class="points-use field" id="points-box">
+            <div class="points-head"><label for="p-use">적립금</label><span>보유 <b id="p-have"></b></span></div>
+            <div class="inline"><input id="p-use" inputmode="numeric" placeholder="0" autocomplete="off"><button type="button" class="btn btn-line" id="p-all">전액 사용</button></div>
+            <p class="msg" id="p-msg"></p>
+          </div>
         </section>
 
         <!-- 결제수단 -->
@@ -99,8 +104,10 @@
         <div><span>상품금액</span><span id="s-price"></span></div>
         <div><span>상품할인</span><span id="s-saved"></span></div>
         <div><span>쿠폰할인</span><span id="s-coupon"></span></div>
+        <div><span>적립금 사용</span><span id="s-points"></span></div>
         <div><span>배송비</span><span id="s-ship"></span></div>
         <div class="sum"><span>최종 결제금액</span><span id="s-total"></span></div>
+        <p class="earn-note" id="s-earn"></p>
         <label class="check agree-pay"><input type="checkbox" id="agree"> 주문 내용을 확인했으며 결제에 동의합니다 <em>(필수)</em></label>
         <p class="form-error" id="error"></p>
         <button class="btn btn-red" id="pay-btn">결제하기</button>
@@ -219,12 +226,44 @@
     }));
 
     // ----- 금액 -----
+    // ----- 적립금 -----
+    const pointsHave = Points.balance();
+    const canUsePoints = pointsHave >= POINTS.min;
+    $("p-have").textContent = won(pointsHave);
+    $("p-use").disabled = $("p-all").disabled = !canUsePoints;
+    $("p-msg").textContent = canUsePoints
+      ? `${won(POINTS.min)} 이상 보유하면 ${POINTS.unit}원 단위로 쓸 수 있어요.`
+      : `적립금이 ${won(POINTS.min)} 이상이면 쓸 수 있어요.`;
+    // 쓸 수 있는 최대: 보유 적립금과 (상품금액 - 쿠폰) 중 작은 쪽, 10원 단위
+    const pointsMax = (coupon) => (canUsePoints ? Math.floor(Math.min(pointsHave, cart.subtotal - coupon) / POINTS.unit) * POINTS.unit : 0);
+    function usePoints(coupon) {
+      const want = parseInt($("p-use").value.replace(/\D/g, "")) || 0;
+      return Math.min(Math.floor(want / POINTS.unit) * POINTS.unit, pointsMax(coupon));
+    }
+    $("p-use").addEventListener("input", () => {
+      $("p-use").value = $("p-use").value.replace(/\D/g, "");
+      updateTotal();
+    });
+    // 입력을 마치면 실제로 쓰이는 금액(10원 단위, 최대치 이하)으로 맞춰 보여줌
+    $("p-use").addEventListener("change", () => {
+      const used = usePoints(totals().coupon);
+      $("p-use").value = used ? used.toLocaleString("ko-KR") : "";
+    });
+    $("p-all").addEventListener("click", () => {
+      const max = pointsMax(totals().coupon);
+      $("p-use").value = max ? max.toLocaleString("ko-KR") : "";
+      updateTotal();
+    });
+
     function totals() {
       const coupon = $("use-coupon")?.checked ? couponAmount : 0;
-      return { coupon, total: cart.subtotal - coupon + cart.ship };
+      const points = usePoints(coupon);
+      return { coupon, points, total: cart.subtotal - coupon - points + cart.ship };
     }
     function updateTotal() {
-      const { coupon, total } = totals();
+      const { coupon, points, total } = totals();
+      $("s-points").textContent = "-" + won(points);
+      $("s-earn").textContent = `배송완료 후 ${won(Points.earnFor({ amount: { subtotal: cart.subtotal, coupon, points } }))} 적립 예정`;
       $("s-price").textContent = won(cart.subtotal + cart.saved);
       $("s-saved").textContent = "-" + won(cart.saved);
       $("s-coupon").textContent = "-" + won(coupon);
@@ -265,7 +304,7 @@
       if (!$("agree").checked) { $("error").textContent = "결제 동의에 체크해 주세요."; return; }
 
       const pay = document.querySelector("input[name=pay]:checked").value;
-      const { coupon, total } = totals();
+      const { coupon, points, total } = totals();
       const memo = $("memo").value === "custom" ? $("memo-custom").value.trim() : $("memo").value;
 
       $("overlay").hidden = false;
@@ -282,7 +321,7 @@
             bank: pay === "deposit" ? $("bank").value : null,
             depositor: pay === "deposit" ? $("depositor").value.trim() : null,
           },
-          amount: { subtotal: cart.subtotal, saved: cart.saved, coupon, ship: cart.ship, total },
+          amount: { subtotal: cart.subtotal, saved: cart.saved, coupon, points, ship: cart.ship, total },
           status: pay === "deposit" ? "입금대기" : "결제완료",
         });
         Cart.save([]);

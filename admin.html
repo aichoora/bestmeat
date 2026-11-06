@@ -538,7 +538,7 @@
         .sort((a, b) => b.joinedAt.localeCompare(a.joinedAt));
       $("member-count").textContent = `총 ${members().length}명`;
       $("member-table").innerHTML = `
-        <thead><tr><th>가입일</th><th>이름</th><th>이메일</th><th>연락처</th><th>이벤트 수신</th><th class="num">주문</th><th class="num">구매금액</th></tr></thead>
+        <thead><tr><th>가입일</th><th>이름</th><th>이메일</th><th>연락처</th><th>이벤트 수신</th><th class="num">주문</th><th class="num">구매금액</th><th class="num">적립금</th></tr></thead>
         <tbody>${list.length ? list.map((u) => {
           const mine = orders.filter((o) => o.email === u.email);
           const spent = mine.filter(isSale).reduce((s, o) => s + o.amount.total, 0);
@@ -550,8 +550,9 @@
             <td>${u.marketing ? `<span class="agree-yes">${icon("check")} 동의</span>` : "<span class='muted-text'>거부</span>"}</td>
             <td class="num">${mine.length}건</td>
             <td class="num">${won(spent)}</td>
+            <td class="num">${won(Points.balance(u.email))}</td>
           </tr>`;
-        }).join("") : `<tr><td colspan="7" class="empty small">회원이 없습니다.</td></tr>`}
+        }).join("") : `<tr><td colspan="8" class="empty small">회원이 없습니다.</td></tr>`}
         </tbody>`;
     }
     $("member-q").addEventListener("input", drawMembers);

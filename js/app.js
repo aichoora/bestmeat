@@ -152,7 +152,9 @@ const Orders = {
   },
   find(id) { return this.all().find((o) => o.id === id); },
   update(id, patch) {
-    Auth.write(this.key, this.all().map((o) => (o.id === id ? { ...o, ...patch } : o)));
+    // 배송완료가 된 날짜를 기록 (적립금 적립일)
+    const stamp = (o) => (patch.status === "배송완료" && !o.deliveredAt ? { deliveredAt: new Date().toISOString() } : {});
+    Auth.write(this.key, this.all().map((o) => (o.id === id ? { ...o, ...patch, ...stamp(o) } : o)));
   },
   // 결제완료/입금대기 상태일 때만 취소 가능 (상품 준비가 시작되면 불가)
   canCancel(o) { return o.status === "결제완료" || o.status === "입금대기"; },
@@ -250,6 +252,7 @@ function openReviewForm(targets, onDone) {
           <textarea id="rv-text" rows="5" maxlength="500" placeholder="고기의 신선도, 맛, 포장 상태 등을 알려주세요. (10자 이상)"></textarea>
           <p class="msg"><span id="rv-count">0</span> / 500자</p></div>
       </div>
+      <p class="review-earn">리뷰를 등록하면 적립금 ${won(POINTS.review)}을 드려요.</p>
       <div class="modal-foot">
         <button type="button" class="btn btn-line" data-close>취소</button>
         <button class="btn btn-red">등록하기</button>
@@ -291,7 +294,7 @@ function openReviewForm(targets, onDone) {
     const saved = Reviews.add({ ...t, rating, text: text.value });
     if (!saved) { alert("리뷰를 등록할 수 없습니다. 이미 리뷰를 쓴 상품인지 확인해 주세요."); close(); return; }
     close();
-    toast("리뷰를 등록했습니다. 감사합니다!");
+    toast(`리뷰를 등록했습니다. 적립금 ${won(POINTS.review)}을 드렸어요!`);
     onDone?.(saved);
   });
   layer.querySelector(".star-pick button").focus();
@@ -371,6 +374,40 @@ const Products = {
   },
 };
 Products.apply();
+
+// ---------- 적립금 ----------
+// 따로 저장하지 않고 회원가입·주문·리뷰 기록으로 계산합니다.
+// · 가입하면 2,000원, 리뷰를 쓰면 500원
+// · 배송완료된 주문은 실제 상품 결제금액(쿠폰·적립금 사용분 제외)의 1%
+// · 주문에 쓴 적립금은 주문을 취소하면 자동으로 돌아옴
+const POINTS = { rate: 0.01, signup: 2000, review: 500, min: 1000, unit: 10 };
+const Points = {
+  earnFor(o) {
+    const a = o.amount || {};
+    return Math.floor(Math.max(0, (a.subtotal || 0) - (a.coupon || 0) - (a.points || 0)) * POINTS.rate);
+  },
+  history(email = Auth.current()?.email) {
+    if (!email) return [];
+    const user = Auth.users().find((u) => u.email === email);
+    if (!user || user.role === "admin") return [];
+    const list = [{ date: user.joinedAt, label: "회원가입 축하 적립금", amount: POINTS.signup }];
+    Orders.all().filter((o) => o.email === email).forEach((o) => {
+      const used = o.amount?.points || 0;
+      if (used) {
+        list.push({ date: o.createdAt, label: "주문에 사용", orderId: o.id, amount: -used });
+        if (o.status === "주문취소") list.push({ date: o.canceledAt || o.createdAt, label: "주문 취소로 돌려받음", orderId: o.id, amount: used });
+      }
+      if (o.status === "배송완료") list.push({ date: o.deliveredAt || o.createdAt, label: "구매 적립 (1%)", orderId: o.id, amount: this.earnFor(o) });
+    });
+    Reviews.saved().filter((r) => r.email === email).forEach((r) => list.push({ date: r.createdAt, label: "리뷰 작성 적립", amount: POINTS.review }));
+    return list.filter((x) => x.amount).sort((a, b) => b.date.localeCompare(a.date));
+  },
+  balance(email) { return this.history(email).reduce((s, x) => s + x.amount, 0); },
+  // 아직 배송완료 전이라 적립 예정인 금액
+  pending(email = Auth.current()?.email) {
+    return Orders.all().filter((o) => o.email === email && Orders.isActive(o)).reduce((s, o) => s + this.earnFor(o), 0);
+  },
+};
 
 // 인기(판매) 순위: 상품 데이터의 기본 판매량(reviews 값) + 이 쇼핑몰에서 실제 주문된 수량 (취소 제외)
 function salesMap() {
@@ -563,6 +600,7 @@ const ICONS = {
   star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
   heart: '<path d="M12 20s-7.5-4.6-9.2-9.4A4.9 4.9 0 0 1 12 6.4a4.9 4.9 0 0 1 9.2 4.2C19.5 15.4 12 20 12 20z"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
+  coin: '<circle cx="12" cy="12" r="9"/><path d="M10 16.5v-9h3a2.6 2.6 0 0 1 0 5.2h-3"/>',
   megaphone: '<path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.3-2.5 3.8"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/>',
   chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',

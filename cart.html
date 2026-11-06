@@ -74,6 +74,7 @@
             <div><span>배송비</span><span>${ship ? won(ship) : "무료"}</span></div>
             <div class="sum"><span>결제예정금액</span><span>${won(subtotal + ship)}</span></div>
             ${ship ? `<p class="hint">${won(SHIPPING.free - subtotal)} 더 담으면 무료배송!</p>` : ""}
+            <p class="earn-note">구매하면 ${won(Math.floor(subtotal * POINTS.rate))} 적립 예정</p>
             <button class="btn btn-red" onclick="order()">주문하기</button>
           </aside>
         </div>`;
