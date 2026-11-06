@@ -164,6 +164,136 @@ const Orders = {
   },
 };
 
+// ---------- 리뷰 (샘플 리뷰 + 회원이 쓴 리뷰는 localStorage에 저장) ----------
+// 회원은 '배송완료'된 주문의 상품에만, 주문 상품(옵션)마다 한 번씩 리뷰를 쓸 수 있습니다.
+const maskName = (n) => {
+  n = String(n || "").trim();
+  if (n.length <= 1) return (n || "고") + "*";
+  if (n.length === 2) return n[0] + "*";
+  return n[0] + "*".repeat(n.length - 2) + n.slice(-1);
+};
+const Reviews = {
+  key: "bestmeat_reviews",
+  saved() { return Auth.read(this.key, []); },
+  all() { return [...(typeof SAMPLE_REVIEWS !== "undefined" ? SAMPLE_REVIEWS : []), ...this.saved()]; },
+  forProduct(id) {
+    return this.all().filter((r) => r.productId === Number(id)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  },
+  // 평균 별점(소수 첫째 자리), 개수, 별점별 개수 [5점, 4점, 3점, 2점, 1점]
+  stats(id) {
+    const list = this.forProduct(id);
+    const n = list.length;
+    const avg = n ? Math.round((list.reduce((s, r) => s + r.rating, 0) / n) * 10) / 10 : 0;
+    return { n, avg, dist: [5, 4, 3, 2, 1].map((k) => list.filter((r) => r.rating === k).length) };
+  },
+  mine() {
+    const me = Auth.current();
+    return me ? this.saved().filter((r) => r.email === me.email) : [];
+  },
+  // 리뷰를 쓸 수 있는 주문 상품 목록 (productId, orderId를 주면 그것만)
+  writable({ productId, orderId } = {}) {
+    const done = new Set(this.mine().map((r) => `${r.orderId}|${r.productId}|${r.opt}`));
+    const out = [];
+    Orders.mine().filter((o) => o.status === "배송완료" && (!orderId || o.id === orderId)).forEach((o) => {
+      o.items.forEach((i) => {
+        const opt = i.opt ?? i.weight;
+        if (productId != null && i.id !== Number(productId)) return;
+        if (!done.has(`${o.id}|${i.id}|${opt}`)) out.push({ orderId: o.id, productId: i.id, name: i.name, opt });
+      });
+    });
+    return out;
+  },
+  add({ orderId, productId, opt, rating, text }) {
+    const me = Auth.profile();
+    if (!me) return null;
+    if (!this.writable({ productId, orderId }).some((w) => w.opt === opt)) return null;
+    const r = {
+      id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      productId: Number(productId), orderId, opt: String(opt), email: me.email, name: maskName(me.name),
+      rating: Math.min(5, Math.max(1, Math.round(Number(rating) || 0))),
+      text: String(text || "").replace(/[<>]/g, "").trim().slice(0, 500),
+      createdAt: new Date().toISOString(),
+    };
+    this.write([...this.saved(), r]);
+    return r;
+  },
+  remove(id) { this.write(this.saved().filter((r) => r.id !== id)); },
+  write(list) { Auth.write(this.key, list); },
+};
+
+// 별 5개 (평점만큼 노란색으로 채움)
+const stars = (v) => `<span class="stars" style="--v:${(Math.max(0, Math.min(5, v)) / 5) * 100}%" role="img" aria-label="별점 ${v}점"></span>`;
+const reviewDate = (iso) => { const d = new Date(iso); return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`; };
+
+// 리뷰 쓰기 창. targets: Reviews.writable()에서 받은 목록 (여러 개면 고르는 칸이 나옴)
+function openReviewForm(targets, onDone) {
+  if (!targets.length) return;
+  document.getElementById("review-layer")?.remove();
+  const layer = document.createElement("div");
+  layer.className = "overlay";
+  layer.id = "review-layer";
+  const label = (t) => `${t.name} (${t.opt}) · 주문 ${t.orderId}`;
+  layer.innerHTML = `
+    <form class="modal" novalidate>
+      <div class="addr-head"><b>리뷰 쓰기</b><button type="button" data-close aria-label="닫기">✕</button></div>
+      <div class="modal-body">
+        ${targets.length > 1
+          ? `<div class="field"><label for="rv-target">리뷰를 쓸 상품</label><select id="rv-target">${targets.map((t, i) => `<option value="${i}">${escapeHtml(label(t))}</option>`).join("")}</select></div>`
+          : `<div class="review-target"><b>${escapeHtml(targets[0].name)}</b><small>옵션 ${escapeHtml(targets[0].opt)} · 주문번호 ${escapeHtml(targets[0].orderId)}</small></div>`}
+        <div class="field" id="rv-star-field"><label>별점</label>
+          <div class="star-pick" role="radiogroup" aria-label="별점">${[1, 2, 3, 4, 5].map((n) => `<button type="button" role="radio" aria-checked="false" aria-label="${n}점" data-v="${n}">★</button>`).join("")}<span id="rv-star-text">별을 눌러 주세요</span></div>
+          <p class="msg"></p></div>
+        <div class="field"><label for="rv-text">리뷰 내용</label>
+          <textarea id="rv-text" rows="5" maxlength="500" placeholder="고기의 신선도, 맛, 포장 상태 등을 알려주세요. (10자 이상)"></textarea>
+          <p class="msg"><span id="rv-count">0</span> / 500자</p></div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-line" data-close>취소</button>
+        <button class="btn btn-red">등록하기</button>
+      </div>
+    </form>`;
+  document.body.appendChild(layer);
+  const form = layer.querySelector("form");
+  const text = layer.querySelector("#rv-text");
+  const WORDS = ["", "별로예요", "그저 그래요", "괜찮아요", "좋아요", "최고예요"];
+  let rating = 0;
+  const close = () => { layer.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (ev) => ev.key === "Escape" && close();
+  document.addEventListener("keydown", onKey);
+  layer.addEventListener("click", (ev) => { if (ev.target === layer || ev.target.closest("[data-close]")) close(); });
+  layer.querySelectorAll(".star-pick button").forEach((b) => b.addEventListener("click", () => {
+    rating = Number(b.dataset.v);
+    layer.querySelectorAll(".star-pick button").forEach((x) => {
+      x.classList.toggle("on", Number(x.dataset.v) <= rating);
+      x.setAttribute("aria-checked", Number(x.dataset.v) === rating);
+    });
+    layer.querySelector("#rv-star-text").textContent = `${rating}점 · ${WORDS[rating]}`;
+    layer.querySelector("#rv-star-field").classList.remove("invalid");
+    layer.querySelector("#rv-star-field .msg").textContent = "";
+  }));
+  text.addEventListener("input", () => (layer.querySelector("#rv-count").textContent = text.value.length));
+  form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const starField = layer.querySelector("#rv-star-field");
+    const textField = text.closest(".field");
+    const starErr = rating ? "" : "별점을 골라 주세요.";
+    const len = text.value.trim().length;
+    const textErr = len < 10 ? `10자 이상 써 주세요. (지금 ${len}자)` : "";
+    starField.classList.toggle("invalid", !!starErr);
+    starField.querySelector(".msg").textContent = starErr;
+    textField.classList.toggle("invalid", !!textErr);
+    if (textErr) textField.querySelector(".msg").textContent = textErr;
+    if (starErr || textErr) return;
+    const t = targets[Number(layer.querySelector("#rv-target")?.value || 0)];
+    const saved = Reviews.add({ ...t, rating, text: text.value });
+    if (!saved) { alert("리뷰를 등록할 수 없습니다. 이미 리뷰를 쓴 상품인지 확인해 주세요."); close(); return; }
+    close();
+    toast("리뷰를 등록했습니다. 감사합니다!");
+    onDone?.(saved);
+  });
+  layer.querySelector(".star-pick button").focus();
+}
+
 // ---------- 상품 (관리자가 수정하면 localStorage에 저장, 없으면 data.js 기본값) ----------
 const Products = {
   key: "bestmeat_products",
@@ -312,7 +442,7 @@ function productCard(p) {
       <p class="origin">${p.origin}${p.grade !== "-" ? " · " + p.grade : ""}</p>
       <a href="product.html?id=${p.id}" class="name">${p.name} <small>${p.weight}</small></a>
       <p class="price"><b class="rate">${discount(p)}%</b> <strong>${won(p.sale)}</strong> <del>${won(p.price)}</del>${productOptions(p).length > 1 ? `<em class="opt-chip">옵션 ${productOptions(p).length}</em>` : ""}</p>
-      ${p.reviews ? `<p class="rating">★ ${p.rating} <span>(${p.reviews.toLocaleString()})</span></p>` : `<p class="rating"><span>새 상품</span></p>`}
+      ${(() => { const r = Reviews.stats(p.id); return r.n ? `<p class="rating">★ ${r.avg.toFixed(1)} <span>(${r.n.toLocaleString()})</span></p>` : `<p class="rating"><span>새 상품</span></p>`; })()}
     </div>
   </article>`;
 }
@@ -337,6 +467,8 @@ const ICONS = {
   phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   ticket: '<path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/><path d="M15 7v2M15 11v2M15 15v2"/>',
+  star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  pen: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
 };
 function icon(name) {
   return `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;

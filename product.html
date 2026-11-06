@@ -15,6 +15,7 @@
   <footer id="footer"></footer>
 
   <script src="js/data.js"></script>
+  <script src="js/reviews-sample.js"></script>
   <script src="js/app.js"></script>
   <script>
     const p = findProduct(param("id"));
@@ -32,7 +33,7 @@
           <div>
             <p class="origin"><a href="products.html?cat=${p.cat}">${catName}</a> › ${p.origin}</p>
             <h1>${p.name}</h1>
-            <p class="rating">${p.reviews ? `★ ${p.rating} <span>리뷰 ${p.reviews.toLocaleString()}개</span>` : `<span>새 상품</span>`}</p>
+            <p class="rating" id="rating-top"></p>
             <p class="price" id="price"></p>
             <dl class="info">
               <div><dt>원산지</dt><dd>${p.origin}</dd></div>
@@ -70,6 +71,18 @@
               <li>${icon("check")}오래 보관하실 때는 한 번 먹을 양씩 나눠 냉동해 주세요.</li>
             </ul></div>
         </section>
+        <section class="section" id="reviews">
+          <div class="section-head"><h2>리뷰 <small id="review-count"></small></h2>
+            <button type="button" class="btn btn-line sm" onclick="writeReview()">${icon("pen")} 리뷰 쓰기</button></div>
+          <div class="review-summary" id="review-summary"></div>
+          <div class="review-tools">
+            <select id="review-sort" aria-label="리뷰 정렬">
+              <option value="new">최신순</option><option value="high">별점 높은순</option><option value="low">별점 낮은순</option>
+            </select>
+          </div>
+          <div id="review-list"></div>
+          <button type="button" class="btn btn-line review-more" id="review-more" hidden>리뷰 더보기</button>
+        </section>
         <section class="section">
           <div class="section-head"><h2>함께 보면 좋은 상품</h2></div>
           <div class="grid">${PRODUCTS.filter((x) => x.cat === p.cat && x.id !== p.id).slice(0, 4).map(productCard).join("")}</div>
@@ -99,6 +112,57 @@
       document.getElementById("total").textContent = won(o.sale * getQty());
     }
     if (p) update();
+
+    // ---------- 리뷰 ----------
+    let reviewShown = 5;
+    function drawReviews() {
+      const s = Reviews.stats(p.id);
+      const me = Auth.current();
+      document.getElementById("rating-top").innerHTML = s.n
+        ? `★ ${s.avg.toFixed(1)} <a href="#reviews"><span>리뷰 ${s.n.toLocaleString()}개</span></a>`
+        : `<span>아직 리뷰가 없어요</span>`;
+      document.getElementById("review-count").textContent = s.n ? s.n.toLocaleString() : "";
+      document.getElementById("review-summary").innerHTML = s.n ? `
+        <div class="review-avg"><strong>${s.avg.toFixed(1)}</strong>${stars(s.avg)}<small>리뷰 ${s.n}개</small></div>
+        <div class="review-dist">${s.dist.map((c, i) => `
+          <div><span>${5 - i}점</span><span class="bar"><i style="width:${(c / s.n) * 100}%"></i></span><span>${c}</span></div>`).join("")}</div>`
+        : `<p class="muted-text">첫 리뷰를 남겨 주세요. 배송이 완료된 주문의 상품만 리뷰를 쓸 수 있어요.</p>`;
+      const sort = document.getElementById("review-sort").value;
+      const list = Reviews.forProduct(p.id).sort((a, b) =>
+        sort === "high" ? b.rating - a.rating || b.createdAt.localeCompare(a.createdAt)
+        : sort === "low" ? a.rating - b.rating || b.createdAt.localeCompare(a.createdAt) : 0);
+      document.getElementById("review-list").innerHTML = list.slice(0, reviewShown).map((r) => `
+        <article class="review">
+          <div class="review-top">${stars(r.rating)}<b>${escapeHtml(r.name)}</b><span class="date">${reviewDate(r.createdAt)}</span>
+            ${me && r.email === me.email ? `<button type="button" class="link-btn" onclick="deleteReview('${r.id}')">삭제</button>` : ""}</div>
+          ${productOptions(p).length > 1 ? `<p class="review-opt">옵션: ${escapeHtml(r.opt)}</p>` : ""}
+          <p class="review-text">${escapeHtml(r.text)}</p>
+        </article>`).join("");
+      document.getElementById("review-more").hidden = list.length <= reviewShown;
+    }
+    function writeReview() {
+      if (!Auth.current()) {
+        if (confirm("리뷰를 쓰려면 로그인이 필요합니다. 로그인 하시겠어요?")) location.href = `login.html?next=${encodeURIComponent("product.html?id=" + p.id)}`;
+        return;
+      }
+      const targets = Reviews.writable({ productId: p.id });
+      if (!targets.length) {
+        alert("배송이 완료된 주문의 상품만 리뷰를 쓸 수 있어요.\n이미 리뷰를 쓰셨다면 마이페이지 > 내 리뷰에서 확인할 수 있습니다.");
+        return;
+      }
+      openReviewForm(targets, drawReviews);
+    }
+    function deleteReview(id) {
+      if (!confirm("이 리뷰를 삭제할까요?")) return;
+      Reviews.remove(id);
+      toast("리뷰를 삭제했습니다.");
+      drawReviews();
+    }
+    if (p) {
+      document.getElementById("review-sort").addEventListener("change", () => { reviewShown = 5; drawReviews(); });
+      document.getElementById("review-more").addEventListener("click", () => { reviewShown += 5; drawReviews(); });
+      drawReviews();
+    }
   </script>
 </body>
 </html>

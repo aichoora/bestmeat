@@ -20,6 +20,7 @@
       <nav class="my-menu" id="menu">
         <a href="#orders"><i data-icon="box"></i> 주문 내역</a>
         <a href="#profile"><i data-icon="user"></i> 회원정보 수정</a>
+        <a href="#reviews"><i data-icon="star"></i> 내 리뷰</a>
         <a href="#password"><i data-icon="lock"></i> 비밀번호 변경</a>
         <a href="#withdraw"><i data-icon="logout"></i> 회원 탈퇴</a>
       </nav>
@@ -36,6 +37,13 @@
             </select>
           </div>
           <div id="orders"></div>
+        </section>
+
+        <!-- 내 리뷰 -->
+        <section class="tab" id="tab-reviews" hidden>
+          <div class="section-head"><h2>내 리뷰</h2></div>
+          <div id="my-writable"></div>
+          <div id="my-reviews"></div>
         </section>
 
         <!-- 회원정보 수정 -->
@@ -85,6 +93,7 @@
   <footer id="footer"></footer>
 
   <script src="js/data.js"></script>
+  <script src="js/reviews-sample.js"></script>
   <script src="js/app.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
@@ -95,7 +104,7 @@
     // ---------- 탭 전환 (주소 끝 #orders 등으로 구분) ----------
     function showTab() {
       const name = (location.hash || "#orders").slice(1);
-      const valid = ["orders", "profile", "password", "withdraw"].includes(name) ? name : "orders";
+      const valid = ["orders", "reviews", "profile", "password", "withdraw"].includes(name) ? name : "orders";
       document.querySelectorAll(".tab").forEach((t) => (t.hidden = t.id !== "tab-" + valid));
       document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.hash === "#" + valid));
     }
@@ -150,6 +159,9 @@
               <a href="order-complete.html?id=${o.id}" class="btn btn-line">상세보기</a>
               <button type="button" class="btn btn-line" onclick="reorder('${o.id}')">다시 담기</button>
               ${Orders.canCancel(o) ? `<button type="button" class="btn btn-line danger" onclick="cancelOrder('${o.id}')">주문 취소</button>` : ""}
+              ${o.status === "배송완료" ? (Reviews.writable({ orderId: o.id }).length
+                ? `<button type="button" class="btn btn-red" onclick="reviewOrder('${o.id}')">리뷰 쓰기</button>`
+                : `<button type="button" class="btn btn-line" disabled>리뷰 작성 완료</button>`) : ""}
             </div>
           </article>`;
       }).join("");
@@ -165,6 +177,39 @@
       toast("주문이 취소되었습니다.");
       drawOrders();
       drawSummary();
+    }
+
+    // ---------- 리뷰 ----------
+    function reviewOrder(id) {
+      openReviewForm(Reviews.writable({ orderId: id }), () => { drawOrders(); drawMyReviews(); });
+    }
+    function drawMyReviews() {
+      const can = Reviews.writable();
+      $("my-writable").innerHTML = can.length ? `
+        <div class="box review-todo"><b>리뷰를 기다리는 상품 ${can.length}개</b>
+          ${can.map((t, i) => `<div class="todo-row"><span>${e(t.name)} <small>${e(t.opt)}</small></span>
+            <button type="button" class="btn btn-line sm" onclick="reviewTarget(${i})">리뷰 쓰기</button></div>`).join("")}</div>` : "";
+      const list = Reviews.mine().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      $("my-reviews").innerHTML = list.length ? list.map((r) => {
+        const p = findProduct(r.productId);
+        return `<article class="box review my-review">
+          <div class="review-top">${stars(r.rating)}<a href="product.html?id=${r.productId}#reviews" class="link"><b>${e(p ? p.name : "판매 종료된 상품")}</b></a>
+            <span class="date">${reviewDate(r.createdAt)}</span>
+            <button type="button" class="link-btn" onclick="deleteMyReview('${r.id}')">삭제</button></div>
+          <p class="review-opt">옵션: ${e(r.opt)} · 주문번호 ${e(r.orderId)}</p>
+          <p class="review-text">${e(r.text)}</p>
+        </article>`;
+      }).join("") : `<div class="empty small"><p>아직 쓴 리뷰가 없어요.</p><p class="muted-text">배송이 완료된 주문의 상품에 리뷰를 남길 수 있어요.</p></div>`;
+    }
+    function reviewTarget(i) {
+      openReviewForm([Reviews.writable()[i]], () => { drawOrders(); drawMyReviews(); });
+    }
+    function deleteMyReview(id) {
+      if (!confirm("이 리뷰를 삭제할까요? 삭제하면 같은 주문 상품에 리뷰를 다시 쓸 수 있습니다.")) return;
+      Reviews.remove(id);
+      toast("리뷰를 삭제했습니다.");
+      drawOrders();
+      drawMyReviews();
     }
 
     function reorder(id) {
@@ -249,6 +294,7 @@
     showTab();
     drawSummary();
     drawOrders();
+    drawMyReviews();
     fillProfile();
   </script>
 </body>

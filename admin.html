@@ -16,6 +16,7 @@
         <a href="#orders"><i data-icon="box"></i> 주문 관리 <i id="pending-count" hidden></i></a>
         <a href="#products"><i data-icon="tag"></i> 상품 관리</a>
         <a href="#members"><i data-icon="users"></i> 회원 관리</a>
+        <a href="#reviews"><i data-icon="star"></i> 리뷰 관리</a>
       </nav>
       <div class="side-bottom">
         <a href="index.html" target="_blank"><i data-icon="home"></i> 쇼핑몰 보기</a>
@@ -81,6 +82,21 @@
           <div class="table-wrap"><table class="table" id="member-table"></table></div>
         </div>
       </section>
+
+      <!-- 리뷰 관리 -->
+      <section class="tab" id="tab-reviews" hidden>
+        <h1>리뷰 관리</h1>
+        <div class="panel">
+          <div class="filter-bar">
+            <div class="inline">
+              <select id="review-star"><option value="">전체 별점</option><option value="5">5점</option><option value="4">4점</option><option value="3">3점</option><option value="2">2점</option><option value="1">1점</option></select>
+              <select id="review-kind"><option value="">전체 리뷰</option><option value="member">회원 리뷰</option><option value="sample">샘플 리뷰</option></select>
+            </div>
+            <input type="search" id="review-q" placeholder="상품명, 작성자, 내용 검색">
+          </div>
+          <div class="table-wrap"><table class="table" id="review-table"></table></div>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -139,6 +155,7 @@
   </div>
 
   <script src="js/data.js"></script>
+  <script src="js/reviews-sample.js"></script>
   <script src="js/app.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
@@ -161,12 +178,12 @@
     const isSale = (o) => o.status !== "주문취소" && o.status !== "입금대기"; // 매출로 잡히는 주문
 
     // ---------- 탭 ----------
-    const TABS = ["dashboard", "orders", "products", "members"];
+    const TABS = ["dashboard", "orders", "products", "members", "reviews"];
     function showTab() {
       const name = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "dashboard";
       document.querySelectorAll(".tab").forEach((t) => (t.hidden = t.id !== "tab-" + name));
       document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.hash === "#" + name));
-      ({ dashboard: drawDashboard, orders: drawOrders, products: drawProducts, members: drawMembers })[name]();
+      ({ dashboard: drawDashboard, orders: drawOrders, products: drawProducts, members: drawMembers, reviews: drawReviews })[name]();
     }
     window.addEventListener("hashchange", showTab);
 
@@ -475,6 +492,39 @@
         </tbody>`;
     }
     $("member-q").addEventListener("input", drawMembers);
+
+    // ---------- 리뷰 관리 ----------
+    // 샘플 리뷰는 시안용 고정 데이터라 삭제할 수 없고, 회원이 쓴 리뷰만 삭제할 수 있음
+    function drawReviews() {
+      const star = Number($("review-star").value);
+      const kind = $("review-kind").value;
+      const q = $("review-q").value.trim();
+      const list = Reviews.all()
+        .map((r) => ({ ...r, pname: findProduct(r.productId)?.name || "(삭제된 상품)" }))
+        .filter((r) => (!star || r.rating === star) && (!kind || (kind === "sample") === !!r.sample)
+          && (!q || [r.pname, r.name, r.email || "", r.text].some((s) => s.includes(q))))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      $("review-table").innerHTML = `
+        <thead><tr><th>작성일</th><th>상품 · 옵션</th><th>작성자</th><th>별점</th><th>내용</th><th></th></tr></thead>
+        <tbody>${list.length ? list.map((r) => `
+          <tr>
+            <td>${fmtDate(r.createdAt, false)}</td>
+            <td><a href="product.html?id=${r.productId}#reviews" target="_blank" class="link">${e(r.pname)}</a><small>${e(r.opt)}</small></td>
+            <td>${e(r.name)}<small>${r.sample ? "샘플" : e(r.email)}</small></td>
+            <td class="nowrap">${stars(r.rating)}</td>
+            <td class="review-cell">${e(r.text)}</td>
+            <td>${r.sample ? "" : `<button type="button" class="btn btn-line sm danger" onclick="deleteReview('${r.id}')">삭제</button>`}</td>
+          </tr>`).join("") : `<tr><td colspan="6" class="empty small">리뷰가 없습니다.</td></tr>`}
+        </tbody>`;
+    }
+    function deleteReview(id) {
+      if (!confirm("이 리뷰를 삭제할까요? 쇼핑몰에서도 사라집니다.")) return;
+      Reviews.remove(id);
+      toast("리뷰를 삭제했습니다.");
+      drawReviews();
+    }
+    ["review-star", "review-kind"].forEach((id) => $(id).addEventListener("change", drawReviews));
+    $("review-q").addEventListener("input", drawReviews);
 
     // ---------- 시작 ----------
     if (Auth.isAdmin()) { updatePending(); showTab(); }

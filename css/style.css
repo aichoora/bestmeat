@@ -103,6 +103,50 @@ button { font: inherit; cursor: pointer; border: 0; }
 .price del { color: #aaa; font-size: 13px; margin-left: 4px; }
 .rating { font-size: 13px; color: #e0a100; margin-top: 2px; }
 .rating span { color: var(--gray); }
+/* ---------- 리뷰 ---------- */
+.stars { position: relative; display: inline-block; font-size: 15px; line-height: 1; letter-spacing: 1px; color: #e3e3e3; white-space: nowrap; vertical-align: -1px; }
+.stars::before { content: "★★★★★"; }
+.stars::after { content: "★★★★★"; position: absolute; left: 0; top: 0; width: var(--v); overflow: hidden; color: #f5a623; }
+.section-head h2 small { font-size: 16px; color: var(--gray); font-weight: 500; }
+.review-summary { display: flex; gap: 40px; align-items: center; padding: 24px 28px; background: var(--bg); border-radius: var(--radius); margin-bottom: 12px; }
+.review-avg { text-align: center; min-width: 120px; }
+.review-avg strong { display: block; font-size: 40px; line-height: 1.1; margin-bottom: 4px; }
+.review-avg .stars { font-size: 20px; }
+.review-avg small { display: block; color: var(--gray); font-size: 13px; margin-top: 6px; }
+.review-dist { flex: 1; max-width: 380px; display: grid; gap: 6px; font-size: 13px; color: var(--gray); }
+.review-dist div { display: grid; grid-template-columns: 32px 1fr 28px; align-items: center; gap: 10px; }
+.review-dist .bar { height: 8px; background: #e8e2de; border-radius: 4px; overflow: hidden; }
+.review-dist .bar i { display: block; height: 100%; background: #f5a623; border-radius: 4px; }
+.review-tools { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.review-tools select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font: inherit; font-size: 14px; }
+.review { padding: 18px 0; border-bottom: 1px solid var(--line); }
+.review-top { display: flex; align-items: center; gap: 10px; font-size: 14px; flex-wrap: wrap; }
+.review-top .date { color: var(--gray); font-size: 13px; }
+.review-top .link-btn { margin-left: auto; }
+.review-opt { font-size: 13px; color: var(--gray); margin-top: 6px; }
+.review-text { margin-top: 8px; line-height: 1.7; white-space: pre-line; }
+.review-more { display: block; margin: 20px auto 0; }
+.link-btn { background: none; color: var(--gray); font-size: 13px; text-decoration: underline; padding: 0; }
+.link-btn:hover { color: var(--red); }
+.my-review { margin-bottom: 12px; padding: 18px 20px; }
+.review-todo { margin-bottom: 16px; padding: 16px 20px; background: #fff7f7; border-color: #f3d0cc; }
+.review-todo .todo-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #f3d0cc; font-size: 14px; }
+.review-todo .todo-row:first-of-type { margin-top: 10px; }
+.review-todo small { color: var(--gray); margin-left: 4px; }
+.review-target { padding: 12px 14px; background: var(--bg); border-radius: 8px; margin-bottom: 14px; }
+.review-target small { display: block; color: var(--gray); font-size: 12px; margin-top: 2px; }
+.star-pick { display: flex; align-items: center; gap: 2px; }
+.star-pick button { font-size: 34px; line-height: 1; background: none; color: #ddd; padding: 0 2px; transition: transform .1s; }
+.star-pick button:hover { transform: scale(1.12); }
+.star-pick button.on { color: #f5a623; }
+.star-pick button:focus-visible { outline: 2px solid #f5a623; outline-offset: 1px; border-radius: 6px; }
+.star-pick span { margin-left: 10px; font-size: 14px; color: var(--gray); }
+.review-cell { max-width: 360px; white-space: normal; font-size: 13px; line-height: 1.5; }
+.nowrap { white-space: nowrap; }
+@media (max-width: 600px) {
+  .review-summary { flex-direction: column; gap: 16px; align-items: stretch; padding: 20px; }
+  .review-dist { max-width: none; }
+}
 .thumb-wrap { position: relative; }
 .thumb-wrap > a { display: block; }
 .btn-cart { position: absolute; right: 10px; bottom: 10px; background: rgba(255,255,255,.95); color: var(--red); font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
