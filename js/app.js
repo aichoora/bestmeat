@@ -563,6 +563,10 @@ const ICONS = {
   star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
   heart: '<path d="M12 20s-7.5-4.6-9.2-9.4A4.9 4.9 0 0 1 12 6.4a4.9 4.9 0 0 1 9.2 4.2C19.5 15.4 12 20 12 20z"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
+  megaphone: '<path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.3-2.5 3.8"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/>',
+  chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+  headset: '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>',
   pen: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
 };
 function icon(name) {
@@ -596,6 +600,7 @@ function renderLayout() {
           ${Auth.current()
             ? `${Auth.isAdmin() ? `<a href="admin.html" class="admin-link">${icon("sliders")} 관리자</a>` : ""}<a href="mypage.html"><b>${escapeHtml(Auth.current().name)}</b>님 · 마이페이지</a><a href="#" onclick="Auth.logout(); return false;">로그아웃</a>`
             : `<a href="login.html">로그인</a><a href="signup.html">회원가입</a>`}
+          <a href="support.html">고객센터</a>
           <a href="cart.html" class="cart-link">${icon("cart")} 장바구니 <i id="cart-count" hidden>0</i></a>
         </nav>
       </div>
@@ -616,7 +621,7 @@ function renderLayout() {
           <p>믿을 수 있는 고기를 산지에서 식탁까지.</p>
         </div>
         <div class="footer-info">
-          <p>고객센터 1588-0000 (평일 09:00~18:00)</p>
+          <p><a href="support.html">고객센터</a> 1588-0000 (평일 09:00~18:00) · <a href="support.html#notice">공지사항</a> · <a href="support.html#faq">자주 묻는 질문</a> · <a href="support.html#qna">1:1 문의</a></p>
           <p>(주)베스트미트 · 대표 홍길동 · 사업자등록번호 000-00-00000</p>
           <p class="copy">© 2026 BESTMEAT. 시안용 페이지입니다. · <a href="credits.html">사진 출처</a></p>
         </div>

@@ -17,6 +17,8 @@
         <a href="#products"><i data-icon="tag"></i> 상품 관리</a>
         <a href="#members"><i data-icon="users"></i> 회원 관리</a>
         <a href="#reviews"><i data-icon="star"></i> 리뷰 관리</a>
+        <a href="#qna"><i data-icon="chat"></i> 1:1 문의 <i id="qna-count" hidden></i></a>
+        <a href="#notices"><i data-icon="megaphone"></i> 공지사항</a>
       </nav>
       <div class="side-bottom">
         <a href="index.html" target="_blank"><i data-icon="home"></i> 쇼핑몰 보기</a>
@@ -97,7 +99,64 @@
           <div class="table-wrap"><table class="table" id="review-table"></table></div>
         </div>
       </section>
+
+      <!-- 1:1 문의 -->
+      <section class="tab" id="tab-qna" hidden>
+        <h1>1:1 문의</h1>
+        <div class="panel">
+          <div class="filter-bar">
+            <div class="chips small" id="qna-filter"></div>
+            <input type="search" id="qna-q" placeholder="제목, 내용, 작성자 검색">
+          </div>
+          <div class="table-wrap"><table class="table" id="qna-table"></table></div>
+        </div>
+      </section>
+
+      <!-- 공지사항 -->
+      <section class="tab" id="tab-notices" hidden>
+        <h1>공지사항</h1>
+        <div class="panel">
+          <div class="filter-bar">
+            <span class="muted-text" id="notice-count"></span>
+            <button type="button" class="btn btn-red sm" onclick="openNotice()">+ 공지 쓰기</button>
+          </div>
+          <div class="table-wrap"><table class="table" id="notice-table"></table></div>
+        </div>
+      </section>
     </main>
+  </div>
+
+  <!-- 문의 답변 창 -->
+  <div class="overlay" id="qna-layer" hidden>
+    <form class="modal" id="qna-form" novalidate>
+      <div class="addr-head"><b>문의 답변</b><button type="button" onclick="closeLayer('qna-layer')" aria-label="닫기">✕</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="a-id">
+        <div class="qna-view" id="qna-view"></div>
+        <div class="field"><label for="a-text">답변 <i>*</i></label><textarea id="a-text" rows="7" maxlength="2000" placeholder="고객님께 보낼 답변을 적어 주세요."></textarea><p class="msg"></p></div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-line" onclick="closeLayer('qna-layer')">취소</button>
+        <button class="btn btn-red" id="a-save">답변 등록</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 공지 쓰기 창 -->
+  <div class="overlay" id="notice-layer" hidden>
+    <form class="modal" id="notice-form" novalidate>
+      <div class="addr-head"><b id="notice-title">공지 쓰기</b><button type="button" onclick="closeLayer('notice-layer')" aria-label="닫기">✕</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="n-id">
+        <div class="field"><label for="n-title">제목 <i>*</i></label><input id="n-title" maxlength="60"><p class="msg"></p></div>
+        <div class="field"><label for="n-body">내용 <i>*</i></label><textarea id="n-body" rows="9" maxlength="3000"></textarea><p class="msg"></p></div>
+        <label class="check"><input type="checkbox" id="n-pinned"> 중요 공지 (목록 맨 위에 고정)</label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-line" onclick="closeLayer('notice-layer')">취소</button>
+        <button class="btn btn-red">저장</button>
+      </div>
+    </form>
   </div>
 
   <!-- 상품 등록/수정 창 -->
@@ -157,6 +216,7 @@
   <script src="js/data.js"></script>
   <script src="js/reviews-sample.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/support.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
     const e = escapeHtml;
@@ -178,12 +238,12 @@
     const isSale = (o) => o.status !== "주문취소" && o.status !== "입금대기"; // 매출로 잡히는 주문
 
     // ---------- 탭 ----------
-    const TABS = ["dashboard", "orders", "products", "members", "reviews"];
+    const TABS = ["dashboard", "orders", "products", "members", "reviews", "qna", "notices"];
     function showTab() {
       const name = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "dashboard";
       document.querySelectorAll(".tab").forEach((t) => (t.hidden = t.id !== "tab-" + name));
       document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.hash === "#" + name));
-      ({ dashboard: drawDashboard, orders: drawOrders, products: drawProducts, members: drawMembers, reviews: drawReviews })[name]();
+      ({ dashboard: drawDashboard, orders: drawOrders, products: drawProducts, members: drawMembers, reviews: drawReviews, qna: drawQna, notices: drawNotices })[name]();
     }
     window.addEventListener("hashchange", showTab);
 
@@ -192,6 +252,9 @@
       const n = Orders.all().filter((o) => o.status === "결제완료" || o.status === "입금대기").length;
       $("pending-count").textContent = n;
       $("pending-count").hidden = !n;
+      const q = Inquiries.pending();
+      $("qna-count").textContent = q;
+      $("qna-count").hidden = !q;
     }
 
     // ---------- 대시보드 ----------
@@ -431,7 +494,7 @@
       }
     });
     $("product-layer").addEventListener("click", (ev) => ev.target.id === "product-layer" && closeProduct());
-    document.addEventListener("keydown", (ev) => ev.key === "Escape" && closeProduct());
+    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") { closeProduct(); closeLayer("qna-layer"); closeLayer("notice-layer"); } });
 
     function setField(input, err) {
       const field = input.closest(".field");
@@ -525,6 +588,121 @@
     }
     ["review-star", "review-kind"].forEach((id) => $(id).addEventListener("change", drawReviews));
     $("review-q").addEventListener("input", drawReviews);
+
+    // ---------- 1:1 문의 ----------
+    function closeLayer(id) { $(id).hidden = true; }
+    ["qna-layer", "notice-layer"].forEach((id) => $(id).addEventListener("click", (ev) => ev.target.id === id && closeLayer(id)));
+
+    let qnaFilter = "wait";
+    function drawQna() {
+      const all = Inquiries.all();
+      const waiting = all.filter((q) => !q.answer).length;
+      $("qna-filter").innerHTML = [["wait", "답변대기", waiting], ["done", "답변완료", all.length - waiting], ["", "전체", all.length]]
+        .map(([v, label, n]) => `<label><input type="radio" name="qf" value="${v}" ${v === qnaFilter ? "checked" : ""}><span>${label} ${n}</span></label>`).join("");
+      const q = $("qna-q").value.trim();
+      const list = all
+        .filter((x) => (!qnaFilter || (qnaFilter === "wait") === !x.answer) && (!q || [x.title, x.body, x.name, x.email].some((s) => s.includes(q))))
+        .sort((a, b) => (qnaFilter === "wait" ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt)));
+      $("qna-table").innerHTML = `
+        <thead><tr><th>문의일</th><th>상태</th><th>유형</th><th>제목</th><th>작성자</th><th></th></tr></thead>
+        <tbody>${list.length ? list.map((x) => `
+          <tr>
+            <td>${fmtDate(x.createdAt)}</td>
+            <td>${inquiryBadge(x)}</td>
+            <td>${e(x.type)}</td>
+            <td><a href="#" class="link" onclick="openAnswer('${x.id}'); return false;">${e(x.title)}</a>${x.orderId ? `<small>주문 ${e(x.orderId)}</small>` : ""}</td>
+            <td>${e(x.name)}<small>${e(x.email)}</small></td>
+            <td class="actions-cell">
+              <button type="button" class="btn ${x.answer ? "btn-line" : "btn-red"} sm" onclick="openAnswer('${x.id}')">${x.answer ? "답변 수정" : "답변하기"}</button>
+              <button type="button" class="btn btn-line sm danger" onclick="deleteQna('${x.id}')">삭제</button>
+            </td>
+          </tr>`).join("") : `<tr><td colspan="6" class="empty small">${qnaFilter === "wait" ? "답변을 기다리는 문의가 없습니다." : "문의가 없습니다."}</td></tr>`}
+        </tbody>`;
+    }
+    $("qna-filter").addEventListener("change", (ev) => { qnaFilter = ev.target.value; drawQna(); });
+    $("qna-q").addEventListener("input", drawQna);
+
+    function openAnswer(id) {
+      const x = Inquiries.find(id);
+      if (!x) return;
+      $("a-id").value = id;
+      $("qna-view").innerHTML = `
+        <div class="qna-meta">${inquiryBadge(x)} <b>${e(x.type)}</b> · ${e(x.name)} (${e(x.email)}) · ${fmtDate(x.createdAt)}
+          ${x.orderId ? `· 주문 <a href="order-complete.html?id=${x.orderId}" target="_blank" class="link">${e(x.orderId)}</a>` : ""}</div>
+        <h3>${e(x.title)}</h3>
+        <div class="qna-q">${e(x.body)}</div>`;
+      $("a-text").value = x.answer || "";
+      $("a-save").textContent = x.answer ? "답변 수정" : "답변 등록";
+      setField($("a-text"), "");
+      $("qna-layer").hidden = false;
+      $("a-text").focus();
+    }
+    $("qna-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const text = $("a-text").value.trim();
+      if (!setField($("a-text"), text ? "" : "답변을 입력해 주세요.")) return;
+      const first = !Inquiries.find($("a-id").value).answer;
+      Inquiries.answer($("a-id").value, text);
+      closeLayer("qna-layer");
+      toast(first ? "답변을 등록했습니다." : "답변을 수정했습니다.");
+      updatePending();
+      drawQna();
+    });
+    function deleteQna(id) {
+      if (!confirm("이 문의를 삭제할까요? 고객 화면에서도 사라집니다.")) return;
+      Inquiries.remove(id);
+      toast("문의를 삭제했습니다.");
+      updatePending();
+      drawQna();
+    }
+
+    // ---------- 공지사항 ----------
+    function drawNotices() {
+      const list = Notices.all();
+      $("notice-count").textContent = `총 ${list.length}개`;
+      $("notice-table").innerHTML = `
+        <thead><tr><th>작성일</th><th>구분</th><th>제목</th><th></th></tr></thead>
+        <tbody>${list.length ? list.map((n) => `
+          <tr>
+            <td>${n.date.replace(/-/g, ".")}</td>
+            <td>${n.pinned ? `<em class="pin">중요</em>` : "일반"}</td>
+            <td><a href="support.html#notice" target="_blank" class="link">${e(n.title)}</a></td>
+            <td class="actions-cell">
+              <button type="button" class="btn btn-line sm" onclick="openNotice(${n.id})">수정</button>
+              <button type="button" class="btn btn-line sm danger" onclick="deleteNotice(${n.id})">삭제</button>
+            </td>
+          </tr>`).join("") : `<tr><td colspan="4" class="empty small">공지가 없습니다.</td></tr>`}
+        </tbody>`;
+    }
+    function openNotice(id) {
+      const n = id ? Notices.all().find((x) => x.id === id) : { title: "", body: "", pinned: false };
+      $("notice-title").textContent = id ? "공지 수정" : "공지 쓰기";
+      $("n-id").value = id || "";
+      $("n-title").value = n.title;
+      $("n-body").value = n.body;
+      $("n-pinned").checked = !!n.pinned;
+      setField($("n-title"), "");
+      setField($("n-body"), "");
+      $("notice-layer").hidden = false;
+      $("n-title").focus();
+    }
+    $("notice-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const title = $("n-title").value.trim(), body = $("n-body").value.trim();
+      const ok = [setField($("n-title"), title ? "" : "제목을 입력해 주세요."), setField($("n-body"), body ? "" : "내용을 입력해 주세요.")].every(Boolean);
+      if (!ok) return;
+      const id = Number($("n-id").value) || undefined;
+      if (!Notices.upsert({ id, title, body, pinned: $("n-pinned").checked })) { alert("저장하지 못했습니다. 브라우저 저장 공간을 확인해 주세요."); return; }
+      closeLayer("notice-layer");
+      toast(id ? "공지를 수정했습니다." : "공지를 등록했습니다.");
+      drawNotices();
+    });
+    function deleteNotice(id) {
+      if (!confirm("이 공지를 삭제할까요?")) return;
+      Notices.remove(id);
+      toast("공지를 삭제했습니다.");
+      drawNotices();
+    }
 
     // ---------- 시작 ----------
     if (Auth.isAdmin()) { updatePending(); showTab(); }

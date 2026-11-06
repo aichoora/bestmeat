@@ -145,6 +145,60 @@ button { font: inherit; cursor: pointer; border: 0; }
 .price del { color: #aaa; font-size: 13px; margin-left: 4px; }
 .rating { font-size: 13px; color: #e0a100; margin-top: 2px; }
 .rating span { color: var(--gray); }
+/* ---------- 고객센터 ---------- */
+.cs-top { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; margin: 16px 0 28px; }
+.cs-top > * { background: var(--bg); border-radius: var(--radius); padding: 22px 24px; }
+.cs-call small { display: block; color: var(--gray); font-size: 13px; }
+.cs-call b { display: block; font-size: 30px; color: var(--red); line-height: 1.2; margin: 2px 0 4px; }
+.cs-call span { font-size: 13px; color: #555; }
+.cs-link { display: flex; flex-direction: column; gap: 4px; transition: background .15s; }
+.cs-link:hover { background: #f3ece8; }
+.cs-link .ic { width: 28px; height: 28px; color: var(--red); margin-bottom: 4px; }
+.cs-link span { font-size: 13px; color: var(--gray); }
+.cs-menu a:last-child { color: inherit; }
+.cs-menu a.on:last-child { color: var(--red); }
+.acc-list { border-top: 2px solid var(--ink); }
+.acc { border-bottom: 1px solid var(--line); }
+.acc summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 16px 8px; cursor: pointer; font-size: 15px; }
+.acc summary::-webkit-details-marker { display: none; }
+.acc summary::after { content: ""; width: 8px; height: 8px; border-right: 2px solid #aaa; border-bottom: 2px solid #aaa; transform: rotate(45deg); margin: -4px 4px 0 auto; flex-shrink: 0; transition: transform .2s; }
+.acc[open] summary::after { transform: rotate(-135deg); margin-top: 4px; }
+.acc summary:hover .acc-title { color: var(--red); }
+.acc-title { flex: 1; min-width: 0; }
+.acc-date { color: var(--gray); font-size: 13px; flex-shrink: 0; }
+.acc-cat { color: var(--gray); font-size: 13px; flex-shrink: 0; min-width: 64px; }
+.acc-body { padding: 18px 20px 22px; background: var(--bg); white-space: pre-line; line-height: 1.75; font-size: 14px; color: #333; }
+.acc.pinned summary { font-weight: 700; }
+.pin { font-style: normal; font-size: 12px; font-weight: 700; color: #fff; background: var(--red); border-radius: 4px; padding: 2px 7px; flex-shrink: 0; }
+.faq .acc-body { display: flex; gap: 12px; white-space: normal; }
+.faq .acc-body > div { white-space: pre-line; }
+.faq-q, .faq-a { font-size: 18px; font-weight: 800; color: var(--red); flex-shrink: 0; width: 20px; }
+.faq-a { color: #2456a6; }
+.faq-search { width: 100%; padding: 14px 18px; border: 2px solid var(--ink); border-radius: 999px; font: inherit; font-size: 15px; outline: none; margin-bottom: 14px; }
+.faq-search:focus { border-color: var(--red); }
+.faq-cats { margin-bottom: 16px; }
+.faq-more { margin-top: 18px; text-align: center; }
+.qna-form { margin-bottom: 20px; }
+.qna-form textarea { width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 8px; font: inherit; outline: none; resize: vertical; }
+.qna-form textarea:focus { border-color: var(--red); }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.form-actions .btn { padding: 10px 24px; border-radius: 8px; }
+.qna-order { font-size: 13px; color: var(--gray); margin-bottom: 8px; }
+.qna-q { white-space: pre-line; }
+.qna-a { margin-top: 16px; padding: 16px 18px; background: #fff; border-left: 3px solid var(--red); border-radius: 6px; }
+.qna-a b { color: var(--red); }
+.qna-a small { color: var(--gray); margin-left: 8px; }
+.qna-a div { margin-top: 6px; white-space: pre-line; }
+.qna-wait { margin-top: 14px; color: var(--gray); font-size: 13px; display: flex; justify-content: space-between; gap: 12px; white-space: normal; }
+.qna-view { padding: 14px 16px; background: var(--bg); border-radius: 8px; margin-bottom: 14px; font-size: 14px; }
+.qna-view h3 { font-size: 16px; margin: 8px 0 6px; }
+.qna-meta { font-size: 13px; color: #555; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.modal-body textarea { resize: vertical; }
+@media (max-width: 900px) {
+  .cs-top { grid-template-columns: 1fr; }
+  .acc-cat { display: none; }
+}
+
 /* ---------- 리뷰 ---------- */
 .stars { position: relative; display: inline-block; font-size: 15px; line-height: 1; letter-spacing: 1px; color: #e3e3e3; white-space: nowrap; vertical-align: -1px; }
 .stars::before { content: "★★★★★"; }
