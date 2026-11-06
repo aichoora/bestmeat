@@ -162,11 +162,20 @@ const Products = {
   // 저장된 상품 목록이 있으면 PRODUCTS 내용을 그것으로 교체 (모든 페이지가 PRODUCTS를 사용)
   apply() {
     const saved = Auth.read(this.key, null);
-    if (Array.isArray(saved)) PRODUCTS.splice(0, PRODUCTS.length, ...saved);
+    if (!Array.isArray(saved)) return;
+    // 사진 기능 이전에 저장된 상품은 img 항목이 없으므로 기본 사진을 채워줌
+    const defaultImg = Object.fromEntries(this.defaults.map((p) => [p.id, p.img]));
+    PRODUCTS.splice(0, PRODUCTS.length, ...saved.map((p) => ("img" in p ? p : { ...p, img: defaultImg[p.id] || "" })));
   },
+  // 저장 성공 여부를 돌려줌 (업로드한 사진이 많으면 브라우저 저장 공간이 부족할 수 있음)
   saveAll(list) {
-    Auth.write(this.key, list);
+    try {
+      localStorage.setItem(this.key, JSON.stringify(list));
+    } catch {
+      return false;
+    }
     PRODUCTS.splice(0, PRODUCTS.length, ...list);
+    return true;
   },
   // 관리자 입력값 정리: 태그 문자 제거, 색상/배지 형식 제한
   clean(p) {
@@ -175,6 +184,8 @@ const Products = {
       ...p,
       name: text(p.name), origin: text(p.origin), grade: text(p.grade) || "-", weight: text(p.weight),
       desc: text(p.desc), emoji: text(p.emoji).slice(0, 4) || "🥩",
+      // 사진: images 폴더의 파일이나 관리자가 올린 사진(data:image)만 허용
+      img: /^(images\/[\w./-]+\.(jpe?g|png|webp)|data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+)$/i.test(p.img || "") ? p.img : "",
       tone: /^#[0-9a-f]{6}$/i.test(p.tone) ? p.tone : "#b23a3a",
       badge: ["BEST", "NEW", "SALE"].includes(p.badge) ? p.badge : "",
       cat: CATEGORIES.some((c) => c.id === p.cat) ? p.cat : CATEGORIES[0].id,
@@ -191,10 +202,10 @@ const Products = {
       item.reviews = 0;
     }
     const exists = PRODUCTS.some((x) => x.id === item.id);
-    this.saveAll(exists ? PRODUCTS.map((x) => (x.id === item.id ? { ...x, ...item } : x)) : [...PRODUCTS, item]);
-    return item;
+    const ok = this.saveAll(exists ? PRODUCTS.map((x) => (x.id === item.id ? { ...x, ...item } : x)) : [...PRODUCTS, item]);
+    return ok ? item : null;
   },
-  remove(id) { this.saveAll(PRODUCTS.filter((x) => x.id !== id)); },
+  remove(id) { return this.saveAll(PRODUCTS.filter((x) => x.id !== id)); },
   reset() {
     try { localStorage.removeItem(this.key); } catch {}
     PRODUCTS.splice(0, PRODUCTS.length, ...this.defaults.map((p) => ({ ...p })));
@@ -249,9 +260,11 @@ function addToCart(id, qty = 1) {
 }
 
 // ---------- 상품 카드 ----------
+// 사진이 있으면 사진, 없거나 불러오지 못하면 이모지를 보여줌
 function thumb(p, big = false) {
-  return `<div class="thumb ${big ? "big" : ""} ${p.soldOut ? "soldout" : ""}" style="--tone:${p.tone}">
+  return `<div class="thumb ${big ? "big" : ""} ${p.soldOut ? "soldout" : ""} ${p.img ? "has-img" : ""}" style="--tone:${p.tone}">
     <span>${p.emoji}</span>
+    ${p.img ? `<img src="${p.img}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.parentNode.classList.remove('has-img'); this.remove()">` : ""}
     ${p.badge ? `<em class="badge badge-${p.badge.toLowerCase()}">${p.badge}</em>` : ""}
     ${p.soldOut ? `<b class="soldout-label">품절</b>` : ""}
   </div>`;
@@ -307,7 +320,7 @@ function renderLayout() {
         <div class="footer-info">
           <p>고객센터 1588-0000 (평일 09:00~18:00)</p>
           <p>(주)베스트미트 · 대표 홍길동 · 사업자등록번호 000-00-00000</p>
-          <p class="copy">© 2026 BESTMEAT. 시안용 페이지입니다.</p>
+          <p class="copy">© 2026 BESTMEAT. 시안용 페이지입니다. · <a href="credits.html">사진 출처</a></p>
         </div>
       </div>`;
   }

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>사진 출처 - 베스트미트</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="header"></header>
+
+  <main class="wrap" style="max-width:900px">
+    <h1 class="page-title">사진 출처</h1>
+    <p class="muted-text" style="margin-bottom:20px">상품 사진은 위키미디어 공용(Wikimedia Commons)의 자유 이용 사진을 정사각형으로 잘라 사용했습니다.</p>
+    <div class="box table-wrap">
+      <table class="table">
+        <thead><tr><th>상품</th><th>원본 사진</th><th>작성자</th><th>라이선스</th></tr></thead>
+        <tbody id="list"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/credits.js"></script>
+  <script>
+    const e = escapeHtml;
+    const safeUrl = (u) => (/^https:\/\//.test(u) ? e(u) : "#");
+    document.getElementById("list").innerHTML = PHOTO_CREDITS.map((c) => `
+      <tr>
+        <td><a href="product.html?id=${c.id}" class="link">${e(c.name)}</a></td>
+        <td><a href="${safeUrl(c.page)}" target="_blank" rel="noopener" class="link">${e(c.title)}</a></td>
+        <td>${e(c.artist || "-")}</td>
+        <td>${c.licenseUrl ? `<a href="${safeUrl(c.licenseUrl)}" target="_blank" rel="noopener" class="link">${e(c.license)}</a>` : e(c.license)}</td>
+      </tr>`).join("");
+  </script>
+</body>
+</html>

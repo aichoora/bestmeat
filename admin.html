@@ -89,6 +89,18 @@
       <div class="addr-head"><b id="product-title">상품 등록</b><button type="button" onclick="closeProduct()" aria-label="닫기">✕</button></div>
       <div class="modal-body">
         <input type="hidden" id="f-id">
+        <div class="field">
+          <label>상품 사진</label>
+          <div class="photo-field">
+            <div class="photo-preview" id="photo-preview"></div>
+            <div class="btns">
+              <label class="btn btn-line sm" for="f-file">사진 선택</label>
+              <input type="file" id="f-file" accept="image/jpeg,image/png,image/webp" hidden>
+              <button type="button" class="btn btn-line sm danger" id="photo-remove">사진 삭제</button>
+              <small>JPG, PNG, WEBP · 정사각형으로 자동 맞춤</small>
+            </div>
+          </div>
+        </div>
         <div class="field"><label for="f-name">상품명 <i>*</i></label><input id="f-name" maxlength="40"><p class="msg"></p></div>
         <div class="cols">
           <div class="field"><label for="f-cat">카테고리</label><select id="f-cat"></select></div>
@@ -101,7 +113,7 @@
         </div>
         <div class="cols">
           <div class="field"><label for="f-weight">중량 <i>*</i></label><input id="f-weight" placeholder="500g"><p class="msg"></p></div>
-          <div class="field"><label>썸네일 (이모지 · 배경색)</label>
+          <div class="field"><label>사진 없을 때 (이모지 · 배경색)</label>
             <div class="inline"><input id="f-emoji" maxlength="4" style="width:70px;text-align:center"><input id="f-tone" type="color" class="color"></div></div>
         </div>
         <div class="cols">
@@ -257,7 +269,7 @@
         <thead><tr><th>상품</th><th>카테고리</th><th>원산지 · 중량</th><th class="num">정가</th><th class="num">판매가</th><th>판매 상태</th><th></th></tr></thead>
         <tbody>${list.length ? list.map((p) => `
           <tr class="${p.soldOut ? "muted" : ""}">
-            <td><div class="prod-cell"><span class="mini-thumb" style="--tone:${p.tone}">${e(p.emoji)}</span>
+            <td><div class="prod-cell"><span class="mini-thumb" style="--tone:${p.tone}">${e(p.emoji)}${p.img ? `<img src="${p.img}" alt="" loading="lazy">` : ""}</span>
               <div><a href="product.html?id=${p.id}" target="_blank" class="link">${e(p.name)}</a>${p.badge ? ` <em class="badge-mini">${p.badge}</em>` : ""}<small>#${p.id}</small></div></div></td>
             <td>${catName(p.cat)}</td>
             <td>${e(p.origin)}<small>${e(p.weight)}</small></td>
@@ -274,8 +286,10 @@
     $("prod-cat").addEventListener("change", drawProducts);
     $("prod-q").addEventListener("input", drawProducts);
 
+    const SPACE_ERROR = "브라우저 저장 공간이 부족합니다. 다른 상품의 사진을 지우거나 더 작은 사진을 올려 주세요.";
+
     function toggleSoldOut(id, soldOut) {
-      Products.upsert({ ...findProduct(id), soldOut });
+      if (!Products.upsert({ ...findProduct(id), soldOut })) { alert(SPACE_ERROR); return; }
       toast(soldOut ? "품절 처리했습니다." : "판매를 재개했습니다.");
       drawProducts();
     }
@@ -283,7 +297,7 @@
     function deleteProduct(id) {
       const p = findProduct(id);
       if (!confirm(`'${p.name}' 상품을 삭제할까요?\n삭제하면 쇼핑몰과 고객 장바구니에서 사라집니다. (기존 주문 내역은 유지)`)) return;
-      Products.remove(id);
+      if (!Products.remove(id)) { alert(SPACE_ERROR); return; }
       toast("상품을 삭제했습니다.");
       drawProducts();
     }
@@ -303,12 +317,57 @@
       $("f-id").value = id || "";
       FIELDS.forEach((k) => ($("f-" + k).value = k === "grade" && p.grade === "-" ? "" : p[k] ?? ""));
       $("f-soldout").checked = !!p.soldOut;
+      photo = p.img || "";
+      $("f-file").value = "";
+      drawPhoto();
       document.querySelectorAll("#product-form .field").forEach((f) => f.classList.remove("invalid"));
       document.querySelectorAll("#product-form .msg").forEach((m) => (m.textContent = ""));
       $("product-layer").hidden = false;
       $("f-name").focus();
     }
     function closeProduct() { $("product-layer").hidden = true; }
+
+    // ----- 사진: 정사각형 600px JPEG로 줄여서 저장 (브라우저 저장 공간 절약) -----
+    let photo = "";
+    function drawPhoto() {
+      const box = $("photo-preview");
+      box.style.setProperty("--tone", $("f-tone").value);
+      box.innerHTML = photo ? `<img src="${photo}" alt="">` : e($("f-emoji").value || "🥩");
+      $("photo-remove").hidden = !photo;
+    }
+    $("f-emoji").addEventListener("input", drawPhoto);
+    $("f-tone").addEventListener("input", drawPhoto);
+    $("photo-remove").addEventListener("click", () => { photo = ""; $("f-file").value = ""; drawPhoto(); });
+
+    function resizeImage(file, size = 600) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          const s = Math.min(img.width, img.height);
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = size;
+          // 가운데를 기준으로 정사각형으로 잘라냄
+          canvas.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(); };
+        img.src = url;
+      });
+    }
+    $("f-file").addEventListener("change", async (ev) => {
+      const file = ev.target.files[0];
+      if (!file) return;
+      if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { alert("JPG, PNG, WEBP 사진만 올릴 수 있습니다."); return; }
+      if (file.size > 15 * 1024 * 1024) { alert("15MB 이하의 사진을 올려 주세요."); return; }
+      try {
+        photo = await resizeImage(file);
+        drawPhoto();
+      } catch {
+        alert("사진을 읽지 못했습니다. 다른 파일을 선택해 주세요.");
+      }
+    });
     $("product-layer").addEventListener("click", (ev) => ev.target.id === "product-layer" && closeProduct());
     document.addEventListener("keydown", (ev) => ev.key === "Escape" && closeProduct());
 
@@ -333,7 +392,8 @@
       if (!ok) { document.querySelector("#product-form .field.invalid input")?.focus(); return; }
 
       const id = Number($("f-id").value) || undefined;
-      Products.upsert({ ...(id ? findProduct(id) : {}), ...v, id, price, sale, soldOut: $("f-soldout").checked });
+      const saved = Products.upsert({ ...(id ? findProduct(id) : {}), ...v, id, price, sale, img: photo, soldOut: $("f-soldout").checked });
+      if (!saved) { alert(SPACE_ERROR); return; }
       closeProduct();
       toast(id ? "상품을 수정했습니다." : "상품을 등록했습니다.");
       drawProducts();
