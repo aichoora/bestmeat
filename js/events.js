@@ -1,5 +1,6 @@
-// 이벤트 데이터 (시안용). 기간이 지나면 자동으로 '종료'로 표시됩니다.
-const EVENTS = [
+// 이벤트 (시안용). 기간이 지나면 자동으로 '종료'로 표시됩니다.
+// 관리자가 한 번이라도 저장하면 localStorage("bestmeat_events")의 목록을 쓰고, 아니면 아래 기본 이벤트를 씁니다.
+const EVENT_DEFAULTS = [
   {
     id: 1, tag: "PREMIUM 한우", title: "한우 프리미엄 위크", sub: "1++ 등급 한우를 특별한 가격에",
     img: "images/banners/1.jpg", start: "2026-11-01", end: "2026-11-30",
@@ -26,6 +27,54 @@ const EVENTS = [
   },
 ];
 
+const Events = {
+  key: "bestmeat_events",
+  load() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(this.key));
+      if (Array.isArray(saved)) return saved;
+    } catch {}
+    return EVENT_DEFAULTS.map((e) => ({ ...e }));
+  },
+  // 저장 성공 여부를 돌려줌 (배너 사진이 많으면 저장 공간이 부족할 수 있음)
+  save(list) {
+    try { localStorage.setItem(this.key, JSON.stringify(list)); } catch { return false; }
+    EVENTS.splice(0, EVENTS.length, ...list);
+    return true;
+  },
+  // 관리자 입력 정리
+  clean(ev) {
+    const text = (v, n) => String(v ?? "").replace(/[<>]/g, "").trim().slice(0, n);
+    const date = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
+    return {
+      id: ev.id,
+      title: text(ev.title, 40), sub: text(ev.sub, 60), tag: text(ev.tag, 16) || "이벤트",
+      start: date(ev.start), end: date(ev.end),
+      img: /^(images\/[\w./-]+\.(jpe?g|png|webp)|data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+)$/i.test(ev.img || "") ? ev.img : "",
+      benefits: (Array.isArray(ev.benefits) ? ev.benefits : []).map((b) => text(b, 40)).filter(Boolean).slice(0, 5),
+      products: [...new Set((ev.products || []).map(Number).filter(Boolean))],
+      visible: ev.visible !== false,
+    };
+  },
+  upsert(ev) {
+    const item = this.clean(ev);
+    const list = EVENTS.map((e) => ({ ...e }));
+    if (!item.id) item.id = Math.max(0, ...list.map((e) => e.id)) + 1;
+    const i = list.findIndex((e) => e.id === item.id);
+    if (i >= 0) list[i] = item; else list.push(item);
+    return this.save(list) ? item : null;
+  },
+  remove(id) { return this.save(EVENTS.filter((e) => e.id !== id)); },
+  reset() {
+    try { localStorage.removeItem(this.key); } catch {}
+    EVENTS.splice(0, EVENTS.length, ...EVENT_DEFAULTS.map((e) => ({ ...e })));
+  },
+};
+// 모든 이벤트 (관리자용, 숨긴 것 포함)
+const EVENTS = Events.load();
+// 고객 화면에 보이는 이벤트 (관리자가 숨긴 것 제외)
+const publicEvents = () => EVENTS.filter((e) => e.visible !== false);
+
 // 이벤트 상태: { label: "진행중" | "오픈 예정" | "종료", dday: "D-9" | "오늘 마감" | "" }
 function eventStatus(ev, now = new Date()) {
   const start = new Date(ev.start + "T00:00:00");
@@ -36,13 +85,16 @@ function eventStatus(ev, now = new Date()) {
   return { label: "진행중", cls: "live", dday: days === 0 ? "오늘 마감" : `D-${days}` };
 }
 const eventPeriod = (ev) => `${ev.start.replace(/-/g, ".")} ~ ${ev.end.slice(5).replace("-", ".")}`;
-const findEvent = (id) => EVENTS.find((e) => e.id === Number(id));
+const findEvent = (id) => publicEvents().find((e) => e.id === Number(id));
+
+// 배너 사진이 없으면 첫 번째 상품 사진을 씀
+const eventImg = (ev) => ev.img || (typeof findProduct === "function" && ev.products.map(findProduct).find((p) => p && p.img)?.img) || "images/banners/1.jpg";
 
 // 이벤트 카드 (이벤트 목록, 메인에서 사용)
 function eventCard(ev) {
   const s = eventStatus(ev);
   return `<a href="event.html?id=${ev.id}" class="event-card ${s.cls}">
-    <div class="event-img"><img src="${ev.img}" alt="" loading="lazy">
+    <div class="event-img"><img src="${eventImg(ev)}" alt="" loading="lazy">
       <span class="event-state ${s.cls}">${s.label}${s.dday ? ` · ${s.dday}` : ""}</span></div>
     <div class="event-body">
       <small>${ev.tag}</small>

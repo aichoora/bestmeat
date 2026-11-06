@@ -131,10 +131,10 @@
       .map((c) => `<a href="products.html?cat=${c.id}"><img src="images/categories/${c.id}.svg" alt="">${c.name}</a>`).join("");
 
     const render = (id, list) => document.getElementById(id).innerHTML = list.slice(0, 4).map(productCard).join("");
-    render("best", byPopularity(PRODUCTS));
+    render("best", bestList(PRODUCTS));
 
     // 진행 중인 이벤트 (마감이 가까운 순서로 2개)
-    const liveEvents = EVENTS.filter((ev) => eventStatus(ev).cls === "live").sort((a, b) => a.end.localeCompare(b.end)).slice(0, 2);
+    const liveEvents = publicEvents().filter((ev) => eventStatus(ev).cls === "live").sort((a, b) => a.end.localeCompare(b.end)).slice(0, 2);
     document.getElementById("events").innerHTML = liveEvents.map(eventCard).join("");
     document.getElementById("event-section").hidden = !liveEvents.length;
     render("deal", [...PRODUCTS].sort((a, b) => discount(b) - discount(a)));

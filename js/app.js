@@ -422,6 +422,25 @@ function byPopularity(list) {
   return [...list].sort((a, b) => score(b) - score(a));
 }
 
+// ---------- 베스트 관리 (관리자가 MD 추천 고정 · 제외 설정) ----------
+const BestConfig = {
+  key: "bestmeat_best",
+  get() {
+    const v = Auth.read(this.key, {}) || {};
+    return { pinned: (v.pinned || []).map(Number), excluded: (v.excluded || []).map(Number) };
+  },
+  save({ pinned, excluded }) { Auth.write(this.key, { pinned: [...new Set(pinned)], excluded: [...new Set(excluded)] }); },
+};
+// 베스트 목록: 제외한 상품은 빼고, MD 추천은 정한 순서대로 맨 앞에, 나머지는 판매순
+function bestList(list, { pins = true } = {}) {
+  const { pinned, excluded } = BestConfig.get();
+  const rest = list.filter((p) => !excluded.includes(p.id));
+  if (!pins) return rest;
+  const top = pinned.map((id) => rest.find((p) => p.id === id)).filter(Boolean);
+  return [...top, ...byPopularity(rest.filter((p) => !pinned.includes(p.id)))];
+}
+const isPinnedBest = (id) => BestConfig.get().pinned.includes(Number(id));
+
 // 장바구니 금액 계산 (장바구니, 주문서에서 함께 사용). 품절 상품은 주문에서 제외.
 function cartSummary() {
   // idx: 장바구니에서 몇 번째 줄인지, o: 고른 옵션 (중량, 정가, 판매가)
@@ -600,6 +619,8 @@ const ICONS = {
   star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
   heart: '<path d="M12 20s-7.5-4.6-9.2-9.4A4.9 4.9 0 0 1 12 6.4a4.9 4.9 0 0 1 9.2 4.2C19.5 15.4 12 20 12 20z"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
+  calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20.5h7M10 17h4"/>',
   coin: '<circle cx="12" cy="12" r="9"/><path d="M10 16.5v-9h3a2.6 2.6 0 0 1 0 5.2h-3"/>',
   megaphone: '<path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.3-2.5 3.8"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/>',

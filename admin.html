@@ -15,6 +15,8 @@
         <a href="#dashboard"><i data-icon="chart"></i> 대시보드</a>
         <a href="#orders"><i data-icon="box"></i> 주문 관리 <i id="pending-count" hidden></i></a>
         <a href="#products"><i data-icon="tag"></i> 상품 관리</a>
+        <a href="#events"><i data-icon="calendar"></i> 이벤트 관리</a>
+        <a href="#best"><i data-icon="trophy"></i> 베스트 관리</a>
         <a href="#members"><i data-icon="users"></i> 회원 관리</a>
         <a href="#reviews"><i data-icon="star"></i> 리뷰 관리</a>
         <a href="#qna"><i data-icon="chat"></i> 1:1 문의 <i id="qna-count" hidden></i></a>
@@ -100,6 +102,43 @@
         </div>
       </section>
 
+      <!-- 이벤트 관리 -->
+      <section class="tab" id="tab-events" hidden>
+        <h1>이벤트 관리</h1>
+        <div class="panel">
+          <div class="filter-bar">
+            <span class="muted-text" id="event-count"></span>
+            <div class="inline">
+              <button type="button" class="btn btn-line" onclick="resetEvents()">기본 이벤트로 초기화</button>
+              <button type="button" class="btn btn-red" onclick="openEvent()">+ 이벤트 등록</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table class="table" id="event-table"></table></div>
+        </div>
+      </section>
+
+      <!-- 베스트 관리 -->
+      <section class="tab" id="tab-best" hidden>
+        <h1>베스트 관리</h1>
+        <p class="tab-desc">베스트 순위는 판매량과 리뷰로 자동 계산됩니다. 여기서 <b>MD 추천</b> 상품을 맨 앞에 고정하거나, 순위에서 뺄 상품을 정할 수 있어요.</p>
+        <div class="best-admin">
+          <div class="panel">
+            <div class="panel-head"><h2>MD 추천 (맨 앞 고정)</h2><small class="muted-text">위에서부터 1위, 2위…</small></div>
+            <div class="inline best-add"><select id="pin-select" aria-label="MD 추천에 넣을 상품"></select><button type="button" class="btn btn-red" onclick="addPin()">추가</button></div>
+            <ol class="best-rows" id="pin-list"></ol>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>베스트에서 제외</h2><small class="muted-text">판매·평점 베스트 모두에서 빠져요</small></div>
+            <div class="inline best-add"><select id="ex-select" aria-label="베스트에서 뺄 상품"></select><button type="button" class="btn btn-line" onclick="addExclude()">제외</button></div>
+            <ul class="best-rows" id="ex-list"></ul>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>쇼핑몰 판매 베스트 미리보기 (상위 10개)</h2><a href="ranking.html" target="_blank">베스트 페이지 보기 ›</a></div>
+          <ol class="best-preview" id="best-preview"></ol>
+        </div>
+      </section>
+
       <!-- 1:1 문의 -->
       <section class="tab" id="tab-qna" hidden>
         <h1>1:1 문의</h1>
@@ -124,6 +163,46 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <!-- 이벤트 등록/수정 창 -->
+  <div class="overlay" id="event-layer" hidden>
+    <form class="modal wide" id="event-form" novalidate>
+      <div class="addr-head"><b id="event-title">이벤트 등록</b><button type="button" onclick="closeLayer('event-layer')" aria-label="닫기">✕</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="ev-id">
+        <div class="field">
+          <label>배너 사진</label>
+          <div class="event-preview" id="ev-preview"></div>
+          <div class="btns ev-btns">
+            <label class="btn btn-line sm" for="ev-file">사진 선택</label>
+            <input type="file" id="ev-file" accept="image/jpeg,image/png,image/webp" hidden>
+            <button type="button" class="btn btn-line sm danger" id="ev-photo-remove">사진 삭제</button>
+            <small>가로로 긴 사진 · 16:7로 자동 맞춤 · 없으면 첫 번째 상품 사진을 씁니다</small>
+          </div>
+        </div>
+        <div class="field"><label for="ev-name">제목 <i>*</i></label><input id="ev-name" maxlength="40" placeholder="예: 한우 프리미엄 위크"><p class="msg"></p></div>
+        <div class="field"><label for="ev-sub">작은 제목</label><input id="ev-sub" maxlength="60" placeholder="예: 1++ 등급 한우를 특별한 가격에"></div>
+        <div class="cols">
+          <div class="field"><label for="ev-tag">태그</label><input id="ev-tag" maxlength="16" placeholder="예: 이번 주 특가"></div>
+          <div class="field"><label>게시</label><label class="check ev-visible"><input type="checkbox" id="ev-visible" checked> 쇼핑몰에 보이기</label></div>
+        </div>
+        <div class="cols">
+          <div class="field"><label for="ev-start">시작일 <i>*</i></label><input id="ev-start" type="date"><p class="msg"></p></div>
+          <div class="field"><label for="ev-end">종료일 <i>*</i></label><input id="ev-end" type="date"><p class="msg"></p></div>
+        </div>
+        <div class="field"><label for="ev-benefits">혜택 안내 <small class="muted-text">한 줄에 하나씩, 최대 5개</small></label>
+          <textarea id="ev-benefits" rows="3" placeholder="기획 상품 최대 20% 할인&#10;5만원 이상 무료배송"></textarea></div>
+        <div class="field" id="ev-products-field"><label>이벤트 상품 <i>*</i> <small class="muted-text" id="ev-picked"></small></label>
+          <input type="search" id="ev-pick-q" placeholder="상품명 검색" class="pick-search">
+          <div class="pick-list" id="ev-pick-list"></div>
+          <p class="msg"></p></div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-line" onclick="closeLayer('event-layer')">취소</button>
+        <button class="btn btn-red">저장</button>
+      </div>
+    </form>
   </div>
 
   <!-- 문의 답변 창 -->
@@ -215,6 +294,7 @@
 
   <script src="js/data.js"></script>
   <script src="js/reviews-sample.js"></script>
+  <script src="js/events.js"></script>
   <script src="js/app.js"></script>
   <script src="js/support.js"></script>
   <script>
@@ -238,12 +318,12 @@
     const isSale = (o) => o.status !== "주문취소" && o.status !== "입금대기"; // 매출로 잡히는 주문
 
     // ---------- 탭 ----------
-    const TABS = ["dashboard", "orders", "products", "members", "reviews", "qna", "notices"];
+    const TABS = ["dashboard", "orders", "products", "events", "best", "members", "reviews", "qna", "notices"];
     function showTab() {
       const name = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "dashboard";
       document.querySelectorAll(".tab").forEach((t) => (t.hidden = t.id !== "tab-" + name));
       document.querySelectorAll("#menu a").forEach((a) => a.classList.toggle("on", a.hash === "#" + name));
-      ({ dashboard: drawDashboard, orders: drawOrders, products: drawProducts, members: drawMembers, reviews: drawReviews, qna: drawQna, notices: drawNotices })[name]();
+      ({ dashboard: drawDashboard, orders: drawOrders, products: drawProducts, events: drawEvents, best: drawBest, members: drawMembers, reviews: drawReviews, qna: drawQna, notices: drawNotices })[name]();
     }
     window.addEventListener("hashchange", showTab);
 
@@ -464,16 +544,19 @@
     $("f-tone").addEventListener("input", drawPhoto);
     $("photo-remove").addEventListener("click", () => { photo = ""; $("f-file").value = ""; drawPhoto(); });
 
-    function resizeImage(file, size = 600) {
+    // 사진을 w×h 크기로 줄임. 비율이 다르면 가운데를 기준으로 잘라냄 (상품: 600×600, 이벤트 배너: 1200×525)
+    function resizeImage(file, w = 600, h = w) {
       return new Promise((resolve, reject) => {
         const url = URL.createObjectURL(file);
         const img = new Image();
         img.onload = () => {
-          const s = Math.min(img.width, img.height);
+          const ratio = w / h;
+          const sw = img.width / img.height > ratio ? img.height * ratio : img.width;
+          const sh = sw / ratio;
           const canvas = document.createElement("canvas");
-          canvas.width = canvas.height = size;
-          // 가운데를 기준으로 정사각형으로 잘라냄
-          canvas.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext("2d").drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, w, h);
           URL.revokeObjectURL(url);
           resolve(canvas.toDataURL("image/jpeg", 0.82));
         };
@@ -494,7 +577,7 @@
       }
     });
     $("product-layer").addEventListener("click", (ev) => ev.target.id === "product-layer" && closeProduct());
-    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") { closeProduct(); closeLayer("qna-layer"); closeLayer("notice-layer"); } });
+    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") { closeProduct(); closeLayer("qna-layer"); closeLayer("notice-layer"); closeLayer("event-layer"); } });
 
     function setField(input, err) {
       const field = input.closest(".field");
@@ -590,9 +673,189 @@
     ["review-star", "review-kind"].forEach((id) => $(id).addEventListener("change", drawReviews));
     $("review-q").addEventListener("input", drawReviews);
 
+    // ---------- 이벤트 관리 ----------
+    function drawEvents() {
+      const list = [...EVENTS].sort((a, b) => b.start.localeCompare(a.start) || b.id - a.id);
+      $("event-count").textContent = `총 ${list.length}개 · 쇼핑몰에 보이는 이벤트 ${publicEvents().length}개`;
+      $("event-table").innerHTML = `
+        <thead><tr><th>배너</th><th>이벤트</th><th>기간</th><th>상태</th><th class="num">상품</th><th>게시</th><th></th></tr></thead>
+        <tbody>${list.length ? list.map((ev) => {
+          const s = eventStatus(ev);
+          return `<tr class="${ev.visible === false ? "muted" : ""}">
+            <td><img src="${eventImg(ev)}" alt="" class="ev-thumb"></td>
+            <td><b>${e(ev.title)}</b><small>${e(ev.tag)}</small></td>
+            <td class="nowrap">${eventPeriod(ev)}</td>
+            <td><em class="event-state static ${s.cls}">${s.label}${s.dday ? " · " + s.dday : ""}</em></td>
+            <td class="num">${ev.products.filter(findProduct).length}개</td>
+            <td><label class="switch"><input type="checkbox" ${ev.visible === false ? "" : "checked"} onchange="toggleEvent(${ev.id}, this.checked)"><span></span>${ev.visible === false ? "숨김" : "보임"}</label></td>
+            <td class="actions-cell">
+              ${ev.visible === false ? "" : `<a href="event.html?id=${ev.id}" target="_blank" class="btn btn-line sm">보기</a>`}
+              <button type="button" class="btn btn-line sm" onclick="openEvent(${ev.id})">수정</button>
+              <button type="button" class="btn btn-line sm danger" onclick="deleteEvent(${ev.id})">삭제</button>
+            </td>
+          </tr>`;
+        }).join("") : `<tr><td colspan="7" class="empty small">이벤트가 없습니다.</td></tr>`}
+        </tbody>`;
+    }
+    function toggleEvent(id, visible) {
+      const ev = EVENTS.find((x) => x.id === id);
+      if (!Events.upsert({ ...ev, visible })) { alert(SPACE_ERROR); return; }
+      toast(visible ? "쇼핑몰에 다시 보이게 했습니다." : "쇼핑몰에서 숨겼습니다.");
+      drawEvents();
+    }
+    function deleteEvent(id) {
+      const ev = EVENTS.find((x) => x.id === id);
+      if (!confirm(`'${ev.title}' 이벤트를 삭제할까요?\n잠시 내리기만 하려면 '게시'를 끄세요.`)) return;
+      Events.remove(id);
+      toast("이벤트를 삭제했습니다.");
+      drawEvents();
+    }
+    function resetEvents() {
+      if (!confirm("관리자가 등록·수정한 이벤트를 모두 지우고 처음 이벤트 4개로 되돌릴까요?")) return;
+      Events.reset();
+      toast("기본 이벤트로 되돌렸습니다.");
+      drawEvents();
+    }
+
+    // 등록/수정 창
+    let evPhoto = "", evPicked = new Set();
+    const today = () => { const d = new Date(), p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+    function openEvent(id) {
+      const ev = id ? EVENTS.find((x) => x.id === id) : { title: "", sub: "", tag: "", start: today(), end: "", benefits: [], products: [], img: "", visible: true };
+      $("event-title").textContent = id ? "이벤트 수정" : "이벤트 등록";
+      $("ev-id").value = id || "";
+      $("ev-name").value = ev.title;
+      $("ev-sub").value = ev.sub;
+      $("ev-tag").value = ev.tag;
+      $("ev-start").value = ev.start;
+      $("ev-end").value = ev.end;
+      $("ev-benefits").value = ev.benefits.join("\n");
+      $("ev-visible").checked = ev.visible !== false;
+      $("ev-pick-q").value = "";
+      evPhoto = ev.img || "";
+      evPicked = new Set(ev.products);
+      $("ev-file").value = "";
+      document.querySelectorAll("#event-form .field").forEach((f) => f.classList.remove("invalid"));
+      document.querySelectorAll("#event-form .msg").forEach((m) => (m.textContent = ""));
+      drawEvPhoto();
+      drawPickList();
+      $("event-layer").hidden = false;
+      $("ev-name").focus();
+    }
+    function drawEvPhoto() {
+      const src = evPhoto || eventImg({ img: "", products: [...evPicked] });
+      $("ev-preview").innerHTML = `<img src="${src}" alt="">${evPhoto ? "" : `<span>사진 없음 · 첫 상품 사진 사용</span>`}`;
+      $("ev-photo-remove").hidden = !evPhoto;
+    }
+    function drawPickList() {
+      const q = $("ev-pick-q").value.trim();
+      // 고른 상품을 먼저 보여줌
+      const list = PRODUCTS.filter((p) => !q || p.name.includes(q))
+        .sort((a, b) => evPicked.has(b.id) - evPicked.has(a.id) || a.id - b.id);
+      $("ev-pick-list").innerHTML = list.map((p) => `
+        <label class="pick ${evPicked.has(p.id) ? "on" : ""}">
+          <input type="checkbox" value="${p.id}" ${evPicked.has(p.id) ? "checked" : ""}>
+          <span class="mini-thumb" style="--tone:${p.tone}">${e(p.emoji)}${p.img ? `<img src="${p.img}" alt="">` : ""}</span>
+          <span class="pick-name">${e(p.name)}<small>${catName(p.cat)} · ${won(p.sale)}${p.soldOut ? " · 품절" : ""}</small></span>
+        </label>`).join("") || `<p class="empty small">'${e(q)}' 상품이 없습니다.</p>`;
+      $("ev-picked").textContent = `${evPicked.size}개 선택`;
+    }
+    $("ev-pick-list").addEventListener("change", (ev) => {
+      const id = Number(ev.target.value);
+      ev.target.checked ? evPicked.add(id) : evPicked.delete(id);
+      ev.target.closest(".pick").classList.toggle("on", ev.target.checked);
+      $("ev-picked").textContent = `${evPicked.size}개 선택`;
+      if (!evPhoto) drawEvPhoto();
+    });
+    $("ev-pick-q").addEventListener("input", drawPickList);
+    $("ev-photo-remove").addEventListener("click", () => { evPhoto = ""; $("ev-file").value = ""; drawEvPhoto(); });
+    $("ev-file").addEventListener("change", async (ev) => {
+      const file = ev.target.files[0];
+      if (!file) return;
+      if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { alert("JPG, PNG, WEBP 사진만 올릴 수 있습니다."); return; }
+      if (file.size > 15 * 1024 * 1024) { alert("15MB 이하의 사진을 올려 주세요."); return; }
+      try {
+        evPhoto = await resizeImage(file, 1200, 525);
+        drawEvPhoto();
+      } catch {
+        alert("사진을 읽지 못했습니다. 다른 파일을 선택해 주세요.");
+      }
+    });
+    $("event-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const title = $("ev-name").value.trim(), start = $("ev-start").value, end = $("ev-end").value;
+      const prodField = $("ev-products-field");
+      const ok = [
+        setField($("ev-name"), title ? "" : "제목을 입력해 주세요."),
+        setField($("ev-start"), start ? "" : "시작일을 골라 주세요."),
+        setField($("ev-end"), !end ? "종료일을 골라 주세요." : start && end < start ? "종료일은 시작일보다 빠를 수 없습니다." : ""),
+      ].every(Boolean);
+      const prodErr = evPicked.size ? "" : "이벤트 상품을 하나 이상 골라 주세요.";
+      prodField.classList.toggle("invalid", !!prodErr);
+      prodField.querySelector(".msg").textContent = prodErr;
+      if (!ok || prodErr) { document.querySelector("#event-form .field.invalid input")?.focus(); return; }
+
+      const id = Number($("ev-id").value) || undefined;
+      const saved = Events.upsert({
+        id, title, start, end,
+        sub: $("ev-sub").value, tag: $("ev-tag").value,
+        benefits: $("ev-benefits").value.split("\n"),
+        products: [...evPicked], img: evPhoto, visible: $("ev-visible").checked,
+      });
+      if (!saved) { alert(SPACE_ERROR); return; }
+      closeLayer("event-layer");
+      toast(id ? "이벤트를 수정했습니다." : "이벤트를 등록했습니다.");
+      drawEvents();
+    });
+
+    // ---------- 베스트 관리 ----------
+    function drawBest() {
+      const { pinned, excluded } = BestConfig.get();
+      const name = (id) => findProduct(id)?.name;
+      const option = (p) => `<option value="${p.id}">${e(p.name)}</option>`;
+      $("pin-select").innerHTML = `<option value="">상품 선택</option>` + PRODUCTS.filter((p) => !pinned.includes(p.id)).map(option).join("");
+      $("ex-select").innerHTML = `<option value="">상품 선택</option>` + PRODUCTS.filter((p) => !excluded.includes(p.id)).map(option).join("");
+      const pins = pinned.filter(name);
+      $("pin-list").innerHTML = pins.length ? pins.map((id, i) => `
+        <li><b class="row-no">${i + 1}</b><span class="row-name">${e(name(id))}</span>
+          <button type="button" class="btn btn-line sm" onclick="movePin(${id}, -1)" ${i === 0 ? "disabled" : ""} aria-label="위로">▲</button>
+          <button type="button" class="btn btn-line sm" onclick="movePin(${id}, 1)" ${i === pins.length - 1 ? "disabled" : ""} aria-label="아래로">▼</button>
+          <button type="button" class="btn btn-line sm danger" onclick="removePin(${id})">빼기</button></li>`).join("")
+        : `<li class="empty small">MD 추천 상품이 없어요. 판매순으로만 보여줍니다.</li>`;
+      const exs = excluded.filter(name);
+      $("ex-list").innerHTML = exs.length ? exs.map((id) => `
+        <li><span class="row-name">${e(name(id))}</span>
+          <button type="button" class="btn btn-line sm" onclick="removeExclude(${id})">다시 포함</button></li>`).join("")
+        : `<li class="empty small">제외한 상품이 없어요.</li>`;
+      $("best-preview").innerHTML = bestList(PRODUCTS).slice(0, 10).map((p) =>
+        `<li>${e(p.name)}${pinned.includes(p.id) ? ` <em class="md-pick static">MD 추천</em>` : ""}</li>`).join("");
+    }
+    function saveBest(cfg, msg) { BestConfig.save(cfg); toast(msg); drawBest(); }
+    function addPin() {
+      const id = Number($("pin-select").value);
+      if (!id) return;
+      const c = BestConfig.get();
+      saveBest({ pinned: [...c.pinned, id], excluded: c.excluded.filter((x) => x !== id) }, "MD 추천에 넣었습니다.");
+    }
+    function movePin(id, d) {
+      const c = BestConfig.get();
+      const list = c.pinned.filter(findProduct);
+      const i = list.indexOf(id);
+      [list[i], list[i + d]] = [list[i + d], list[i]];
+      saveBest({ ...c, pinned: list }, "순서를 바꿨습니다.");
+    }
+    function removePin(id) { const c = BestConfig.get(); saveBest({ ...c, pinned: c.pinned.filter((x) => x !== id) }, "MD 추천에서 뺐습니다."); }
+    function addExclude() {
+      const id = Number($("ex-select").value);
+      if (!id) return;
+      const c = BestConfig.get();
+      saveBest({ pinned: c.pinned.filter((x) => x !== id), excluded: [...c.excluded, id] }, "베스트에서 제외했습니다.");
+    }
+    function removeExclude(id) { const c = BestConfig.get(); saveBest({ ...c, excluded: c.excluded.filter((x) => x !== id) }, "베스트에 다시 포함했습니다."); }
+
     // ---------- 1:1 문의 ----------
     function closeLayer(id) { $(id).hidden = true; }
-    ["qna-layer", "notice-layer"].forEach((id) => $(id).addEventListener("click", (ev) => ev.target.id === id && closeLayer(id)));
+    ["qna-layer", "notice-layer", "event-layer"].forEach((id) => $(id).addEventListener("click", (ev) => ev.target.id === id && closeLayer(id)));
 
     let qnaFilter = "wait";
     function drawQna() {

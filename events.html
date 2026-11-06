@@ -29,7 +29,7 @@
     function draw() {
       const state = document.querySelector("input[name=state]:checked").value;
       // 진행중 탭에는 오픈 예정도 함께, 마감이 가까운 순서로
-      const list = EVENTS
+      const list = publicEvents()
         .filter((ev) => (eventStatus(ev).cls === "ended") === (state === "ended"))
         .sort((a, b) => (state === "ended" ? b.end.localeCompare(a.end) : a.end.localeCompare(b.end)));
       document.getElementById("list").innerHTML = list.length
